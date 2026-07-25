@@ -3,7 +3,7 @@ import type { Deck } from '@/types';
 /**
  * Decks disponíveis para sorteio.
  *
- * Como há mais decks (10) do que jogadores (4), o sorteio escolhe 4 deles
+ * Como há mais decks (11) do que jogadores (4), o sorteio escolhe 4 deles
  * aleatoriamente a cada campeonato — os outros ficam de fora daquela
  * rodada (ver `sortearDecks` em `services/deckAssignmentService.ts`).
  */
@@ -69,5 +69,11 @@ export const decks: Deck[] = [
     // (Sharpedo ex) — mantendo o mesmo nome pra não duplicar cor/tema.
     tipoPrincipal: 'Sombrio',
     arquetipo: 'Ataque',
+  },
+  {
+    id: 'deck-mega-excadrill',
+    nome: 'Mega Excadrill',
+    tipoPrincipal: 'Metálico',
+    arquetipo: 'Tank',
   },
 ];

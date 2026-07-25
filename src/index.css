@@ -1,0 +1,184 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* ============================================================
+   DESIGN SYSTEM — Pokémon Night
+   Pixel-art moderno: retrô na moldura, moderno na usabilidade.
+   ============================================================ */
+
+@theme {
+  /* ---------- Tipografia ----------
+     Press Start 2P: só títulos/marca/badges curtos (texto longo fica
+     ilegível nessa fonte — uso deliberadamente restrito).
+     Pixelify Sans: tudo que precisa ser lido de verdade. */
+  --font-display: 'Press Start 2P', 'Courier New', monospace;
+  --font-sans: 'Pixelify Sans', system-ui, sans-serif;
+
+  /* ---------- Cores ---------- */
+  --color-canvas: #f4f2ea;       /* fundo — bege claro tipo tela LCD, não branco puro */
+  --color-surface: #ffffff;
+  --color-surface-alt: #eeece1;
+  --color-ink: #1c1a17;          /* quase-preto quente, usado em bordas e sombras duras */
+  --color-ink-soft: #6f6a5e;
+  --color-line: #ddd8c8;
+
+  --color-brand: #ee1c25;        /* vermelho de marca — uso escasso, ações primárias */
+  --color-brand-soft: #fdeceb;
+  --color-champion: #ffcb05;     /* dourado — reservado ao momento do campeão */
+  --color-champion-soft: #fff9e0;
+
+  --color-success: #3a9a5c;
+  --color-success-soft: #e8f6ec;
+  --color-warning: #d98c1a;
+  --color-warning-soft: #fdf3e3;
+  --color-danger: #d64545;
+  --color-danger-soft: #fdecec;
+
+  /* ---------- Sombras ----------
+     "pixel": dura, sem blur, deslocada — sensação de sprite sobre a tela.
+     "soft": com blur, só para overlays (fundo do modal), nunca em cards. */
+  --shadow-pixel-sm: 2px 2px 0 0 var(--color-ink);
+  --shadow-pixel-md: 4px 4px 0 0 var(--color-ink);
+  --shadow-pixel-brand: 4px 4px 0 0 var(--color-brand);
+  --shadow-pixel-champion: 4px 4px 0 0 var(--color-champion);
+  --shadow-soft: 0 12px 32px rgba(28, 26, 23, 0.14);
+
+  /* ---------- Movimento ----------
+     150–250ms conforme pedido. "retro" dá o leve "salto" de sprite
+     selecionado (overshoot); "snap" é usado nos efeitos discretos
+     (flash de captura, partículas de pixel). */
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 250ms;
+  --ease-retro: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-snap: cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  @apply antialiased bg-canvas text-ink;
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+
+/* ---------- Utilitário: cantos em degrau (pixel-corners) ----------
+   Usado em elementos-âncora do retrô (Modal/Dialog, e opcionalmente
+   Card em variante "pixel"). Não aplicado globalmente — em elementos
+   densos de informação (inputs, listas) atrapalharia a leitura. */
+.pixel-corners {
+  clip-path: polygon(
+    0 8px, 8px 8px, 8px 0,
+    calc(100% - 8px) 0, calc(100% - 8px) 8px, 100% 8px,
+    100% calc(100% - 8px), calc(100% - 8px) calc(100% - 8px), calc(100% - 8px) 100%,
+    8px 100%, 8px calc(100% - 8px), 0 calc(100% - 8px)
+  );
+}
+
+/* ---------- Keyframes do sistema de animação ---------- */
+
+/* Cartas deslizam para a tela (DeckCard, Card em geral ao aparecer) */
+@keyframes slideInCard {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Efeito de captura ao sortear deck: "engole" e solta, como uma
+   Poké Ball fechando sobre o card por um instante. */
+@keyframes captureEffect {
+  0% {
+    transform: scale(1);
+    filter: brightness(1) saturate(1);
+  }
+  35% {
+    transform: scale(0.88) rotate(-1deg);
+    filter: brightness(1.5) saturate(1.4);
+  }
+  60% {
+    transform: scale(1.04) rotate(1deg);
+    filter: brightness(1.1) saturate(1.1);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1) saturate(1);
+  }
+}
+
+/* Brilho pulsante quando o campeão é definido */
+@keyframes championGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 203, 5, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(255, 203, 5, 0);
+  }
+}
+
+/* Pequenos "pixels" surgindo — usado em bursts pontuais (captura,
+   confirmação de vencedor). Aplicar em elementos curtos (::before/::after
+   ou spans posicionados absolutamente pelo componente consumidor). */
+@keyframes pixelPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2) translateY(-6px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-14px);
+  }
+}
+
+/* Barra de HP preenchendo — aplicado via transição de width (não
+   keyframe fixo), pois o alvo do preenchimento é dinâmico. Ver
+   utilitário `.hp-bar-fill` abaixo. */
+.hp-bar-fill {
+  transition: width var(--duration-slow) var(--ease-snap);
+}
+
+.animate-slide-in-card {
+  animation: slideInCard var(--duration-base) var(--ease-retro) both;
+}
+
+.animate-capture {
+  animation: captureEffect 480ms var(--ease-snap) both;
+}
+
+.animate-champion-glow {
+  animation: championGlow 1.8s var(--ease-snap) infinite;
+}
+
+.animate-pixel-pop {
+  animation: pixelPop 600ms var(--ease-snap) both;
+}
+
+/* Crossfade do fundo (idle -> transição -> revelado). Elemento
+   ambiente, não interativo — por isso a duração é maior que os
+   150–250ms usados em botões/cards. */
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-backdrop-fade {
+  animation: backdropFadeIn 700ms ease-out both;
+}

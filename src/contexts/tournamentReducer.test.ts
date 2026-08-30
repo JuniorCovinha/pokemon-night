@@ -22,12 +22,50 @@ function estadoInicial(): TournamentState {
 }
 
 describe('tournamentReducer', () => {
+  it('DEFINIR_DECKS configura os decks que participarão do sorteio', () => {
+    const semDecks = {
+      tournament: criarTorneio(players, []),
+      error: null,
+    };
+    const novoEstado = tournamentReducer(semDecks, {
+      type: 'DEFINIR_DECKS',
+      payload: { decks },
+    });
+
+    expect(novoEstado.tournament.decks).toEqual(decks);
+    expect(novoEstado.error).toBeNull();
+  });
+
   it('SORTEAR_DECKS avança o status para decks-sorteados', () => {
     const novoEstado = tournamentReducer(estadoInicial(), { type: 'SORTEAR_DECKS' });
 
     expect(novoEstado.tournament.status).toBe('decks-sorteados');
     expect(novoEstado.tournament.assignments).toHaveLength(4);
     expect(novoEstado.error).toBeNull();
+  });
+
+  it('INICIAR_CAMPEONATO_COM_DECKS gera confrontos sem trocar os decks informados', () => {
+    const novoEstado = tournamentReducer(
+      { tournament: criarTorneio([], []), error: null },
+      {
+        type: 'INICIAR_CAMPEONATO_COM_DECKS',
+        payload: {
+          registrations: players.map((player, index) => ({
+            player,
+            deck: decks[index],
+          })),
+        },
+      },
+    );
+
+    expect(novoEstado.tournament.status).toBe('chave-gerada');
+    expect(novoEstado.tournament.assignments).toEqual(
+      players.map((player, index) => ({
+        playerId: player.id,
+        deckId: decks[index].id,
+      })),
+    );
+    expect(novoEstado.tournament.bracket?.rounds).toHaveLength(2);
   });
 
   it('GERAR_CHAVE antes de sortear decks produz erro e mantém o estado anterior', () => {

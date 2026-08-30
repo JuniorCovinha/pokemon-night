@@ -29,6 +29,12 @@ export type Deck = {
   id: string;
   nome: string;
 
+  // Carta principal usada para representar este deck na TCGdex.
+  tcgdexCardId?: string;
+
+  // Pokémon principal usado quando os dados vieram da PokéAPI.
+  pokeApiPokemonId?: string;
+
   // Mídia
   imagem?: string;
   miniatura?: string;
@@ -36,7 +42,6 @@ export type Deck = {
 
   // Identidade do deck
   descricao?: string;
-  arquetipo?: string;
   tipoPrincipal?: string;
   formato?: string;
   expansao?: string;

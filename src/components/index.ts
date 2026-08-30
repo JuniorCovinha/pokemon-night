@@ -5,3 +5,6 @@ export * from './MatchCard';
 export * from './TournamentBracket';
 export * from './ChampionCard';
 export * from './ChampionBackdrop';
+export * from './DeckSelection';
+export * from './PokemonDeckSearch';
+export * from './ChampionshipRegistration';

@@ -11,7 +11,12 @@ type PlayerCardProps = {
   onRename?: (novoNome: string) => void;
 };
 
-export function PlayerCard({ player, deck, editable = false, onRename }: PlayerCardProps) {
+export function PlayerCard({
+  player,
+  deck,
+  editable = false,
+  onRename,
+}: PlayerCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [rascunho, setRascunho] = useState(player.name);
 
@@ -33,7 +38,7 @@ export function PlayerCard({ player, deck, editable = false, onRename }: PlayerC
   }
 
   return (
-    <Card className="flex items-center gap-3 !p-3">
+    <Card className="light-card flex items-center gap-3 !p-3">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-canvas font-display text-xs text-ink">
         {player.name.charAt(0).toUpperCase()}
       </div>

@@ -5,8 +5,11 @@ import {
   desfazerVencedorDoTorneio,
   renomearJogador,
   reiniciarCampeonato,
+  definirDecksDoTorneio,
+  iniciarCampeonatoComDecksDefinidos,
 } from '@/services';
-import type { Tournament } from '@/types';
+import type { PlayerDeckRegistration } from '@/services';
+import type { Deck, Tournament } from '@/types';
 
 export type TournamentState = {
   tournament: Tournament;
@@ -15,8 +18,13 @@ export type TournamentState = {
 };
 
 export type TournamentAction =
+  | { type: 'DEFINIR_DECKS'; payload: { decks: Deck[] } }
   | { type: 'SORTEAR_DECKS' }
   | { type: 'GERAR_CHAVE' }
+  | {
+      type: 'INICIAR_CAMPEONATO_COM_DECKS';
+      payload: { registrations: PlayerDeckRegistration[] };
+    }
   | { type: 'REGISTRAR_VENCEDOR'; payload: { matchId: string; winnerId: string } }
   | { type: 'DESFAZER_VENCEDOR'; payload: { matchId: string } }
   | { type: 'RENOMEAR_JOGADOR'; payload: { playerId: string; novoNome: string } }
@@ -39,11 +47,26 @@ export function tournamentReducer(
 ): TournamentState {
   try {
     switch (action.type) {
+      case 'DEFINIR_DECKS':
+        return {
+          tournament: definirDecksDoTorneio(state.tournament, action.payload.decks),
+          error: null,
+        };
+
       case 'SORTEAR_DECKS':
         return { tournament: sortearDecksDoTorneio(state.tournament), error: null };
 
       case 'GERAR_CHAVE':
         return { tournament: gerarChaveDoTorneio(state.tournament), error: null };
+
+      case 'INICIAR_CAMPEONATO_COM_DECKS':
+        return {
+          tournament: iniciarCampeonatoComDecksDefinidos(
+            state.tournament,
+            action.payload.registrations,
+          ),
+          error: null,
+        };
 
       case 'REGISTRAR_VENCEDOR':
         return {
@@ -80,7 +103,10 @@ export function tournamentReducer(
   } catch (err) {
     return {
       ...state,
-      error: err instanceof Error ? err.message : 'Erro desconhecido ao atualizar o campeonato.',
+      error:
+        err instanceof Error
+          ? err.message
+          : 'Erro desconhecido ao atualizar o campeonato.',
     };
   }
 }

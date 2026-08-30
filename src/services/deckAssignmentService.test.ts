@@ -33,10 +33,20 @@ describe('sortearDecks', () => {
     expect(new Set(deckIds).size).toBe(deckIds.length);
   });
 
+  it('escolhe apenas um deck por jogador quando existem 10 opções', () => {
+    const dezDecks = Array.from({ length: 10 }, (_, index) => ({
+      id: `deck-${index + 1}`,
+      nome: `Deck ${index + 1}`,
+    }));
+
+    const assignments = sortearDecks(players, dezDecks);
+
+    expect(assignments).toHaveLength(players.length);
+    expect(new Set(assignments.map((item) => item.deckId)).size).toBe(players.length);
+  });
+
   it('lança erro quando há menos decks do que jogadores', () => {
-    expect(() => sortearDecks(players, decks.slice(0, 2))).toThrow(
-      /Decks insuficientes/,
-    );
+    expect(() => sortearDecks(players, decks.slice(0, 2))).toThrow(/Decks insuficientes/);
   });
 
   it('lança erro quando não há jogadores', () => {

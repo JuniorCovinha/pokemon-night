@@ -7,8 +7,10 @@ type ChampionCardProps = {
 };
 
 export function ChampionCard({ champion }: ChampionCardProps) {
+  const pokemonImage = champion.deck.imagem ?? champion.deck.miniatura;
+
   return (
-    <div className="pixel-corners animate-slide-in-card animate-champion-glow relative bg-champion-soft p-8 text-center shadow-[var(--shadow-pixel-champion)]">
+    <div className="light-card pixel-corners animate-slide-in-card animate-champion-glow relative bg-champion-soft p-8 text-center shadow-[var(--shadow-pixel-champion)]">
       <PixelBurst />
 
       <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full border-2 border-champion bg-white text-champion">
@@ -18,6 +20,15 @@ export function ChampionCard({ champion }: ChampionCardProps) {
       <p className="font-display text-[10px] uppercase tracking-wide text-ink-soft">
         Campeão da noite
       </p>
+
+      {pokemonImage && (
+        <img
+          src={pokemonImage}
+          alt={`Pokémon principal do deck campeão ${champion.deck.nome}`}
+          className="mx-auto mt-5 max-h-72 w-full max-w-sm object-contain drop-shadow-[0_12px_12px_rgba(28,26,23,0.22)] sm:max-h-80"
+        />
+      )}
+
       <h2 className="mt-2 break-words font-display text-lg text-ink sm:text-xl">
         {champion.player.name}
       </h2>

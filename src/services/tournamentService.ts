@@ -1,4 +1,5 @@
-import { generateId } from '@/utils';
+import { generateId, isPowerOfTwo } from '@/utils';
+import { MAX_DRAW_DECKS } from '@/constants/tournament';
 import { sortearDecks } from './deckAssignmentService';
 import {
   sortearConfrontos,
@@ -9,11 +10,19 @@ import {
 } from './bracketService';
 import type { Champion, Deck, Player, Tournament } from '@/types';
 
+export type PlayerDeckRegistration = {
+  player: Player;
+  deck: Deck;
+};
+
 /**
  * Cria um campeonato novo, no estado inicial (só com jogadores e decks
  * disponíveis, nada sorteado ainda).
  */
-export function criarTorneio(players: readonly Player[], decks: readonly Deck[]): Tournament {
+export function criarTorneio(
+  players: readonly Player[],
+  decks: readonly Deck[],
+): Tournament {
   return {
     id: generateId('tournament'),
     status: 'registrando-jogadores',
@@ -22,6 +31,100 @@ export function criarTorneio(players: readonly Player[], decks: readonly Deck[])
     assignments: [],
     createdAt: new Date().toISOString(),
   };
+}
+
+/**
+ * Define o conjunto de decks que participará do sorteio.
+ * Só pode ser alterado antes do início do campeonato.
+ */
+export function definirDecksDoTorneio(
+  tournament: Tournament,
+  decks: readonly Deck[],
+): Tournament {
+  if (tournament.status !== 'registrando-jogadores') {
+    throw new Error('Os decks só podem ser alterados antes do sorteio.');
+  }
+
+  if (decks.length > MAX_DRAW_DECKS) {
+    throw new Error(`O modo Sorteio aceita no máximo ${MAX_DRAW_DECKS} decks.`);
+  }
+
+  const ids = decks.map((deck) => deck.id);
+  if (new Set(ids).size !== ids.length) {
+    throw new Error('Não é possível selecionar o mesmo deck mais de uma vez.');
+  }
+
+  return {
+    ...tournament,
+    decks: [...decks],
+    assignments: [],
+  };
+}
+
+/**
+ * Configura um campeonato em que cada jogador já entra com seu próprio deck.
+ * Decks repetidos são válidos; apenas jogadores e vínculos precisam ser únicos.
+ */
+export function configurarCampeonatoComDecksDefinidos(
+  tournament: Tournament,
+  registrations: readonly PlayerDeckRegistration[],
+): Tournament {
+  if (tournament.status !== 'registrando-jogadores') {
+    throw new Error('As inscrições só podem ser alteradas antes do campeonato.');
+  }
+
+  if (registrations.length < 2 || !isPowerOfTwo(registrations.length)) {
+    throw new Error('O campeonato precisa ter 2, 4, 8 ou 16 jogadores.');
+  }
+
+  const players = registrations.map(({ player }) => ({
+    ...player,
+    name: player.name.trim(),
+  }));
+
+  if (players.some((player) => player.name.length === 0)) {
+    throw new Error('Todos os jogadores precisam ter um nome.');
+  }
+
+  const playerIds = players.map((player) => player.id);
+  if (new Set(playerIds).size !== playerIds.length) {
+    throw new Error('Cada jogador precisa ter um identificador único.');
+  }
+
+  const normalizedNames = players.map((player) => player.name.toLocaleLowerCase('pt-BR'));
+  if (new Set(normalizedNames).size !== normalizedNames.length) {
+    throw new Error('Os jogadores precisam ter nomes diferentes.');
+  }
+
+  if (registrations.some(({ deck }) => !deck.id || !deck.nome.trim())) {
+    throw new Error('Todos os jogadores precisam ter um deck definido.');
+  }
+
+  const decks = Array.from(
+    new Map(registrations.map(({ deck }) => [deck.id, deck])).values(),
+  );
+  const assignments = registrations.map(({ player, deck }) => ({
+    playerId: player.id,
+    deckId: deck.id,
+  }));
+
+  return {
+    ...tournament,
+    players,
+    decks,
+    assignments,
+    status: 'decks-sorteados',
+  };
+}
+
+/** Configura as inscrições e sorteia os confrontos em uma única transição. */
+export function iniciarCampeonatoComDecksDefinidos(
+  tournament: Tournament,
+  registrations: readonly PlayerDeckRegistration[],
+): Tournament {
+  return gerarChaveDoTorneio(
+    configurarCampeonatoComDecksDefinidos(tournament, registrations),
+  );
 }
 
 /**
@@ -86,7 +189,10 @@ export function registrarVencedorDoTorneio(
  * resultante — se a cascata desfizer a final também, o campeonato deixa
  * de estar "finalizado" automaticamente.
  */
-export function desfazerVencedorDoTorneio(tournament: Tournament, matchId: string): Tournament {
+export function desfazerVencedorDoTorneio(
+  tournament: Tournament,
+  matchId: string,
+): Tournament {
   if (!tournament.bracket) {
     throw new Error('A chave ainda não foi gerada.');
   }

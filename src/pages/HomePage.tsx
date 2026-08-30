@@ -1,4 +1,5 @@
-import { Shuffle, Swords, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Shuffle, Swords, RotateCcw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useTournament } from '@/hooks/useTournament';
 import { useChampionReveal } from '@/hooks/useChampionReveal';
 import {
@@ -7,14 +8,18 @@ import {
   TournamentBracket,
   ChampionCard,
   ChampionBackdrop,
+  DeckSelection,
 } from '@/components';
 import { Button } from '@/components/ui';
+import { MAX_DRAW_DECKS } from '@/constants/tournament';
 
 export function HomePage() {
+  const navigate = useNavigate();
   const {
     tournament,
     champion,
     error,
+    definirDecks,
     sortearDecks,
     gerarChave,
     registrarVencedor,
@@ -27,6 +32,9 @@ export function HomePage() {
 
   const decksJaSorteados = tournament.status !== 'registrando-jogadores';
   const chaveGerada = Boolean(tournament.bracket);
+  const quantidadeDeDecksCorreta =
+    tournament.decks.length >= tournament.players.length &&
+    tournament.decks.length <= MAX_DRAW_DECKS;
 
   function deckDoJogador(playerId: string) {
     const assignment = tournament.assignments.find((a) => a.playerId === playerId);
@@ -45,12 +53,23 @@ export function HomePage() {
         onTransitionEnded={handleTransitionEnded}
       />
 
-      <header className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-bold text-ink">Pokémon Night</h1>
-        <Button variant="secondary" size="sm" onClick={reiniciar}>
-          <RotateCcw size={14} />
-          Novo Campeonato
-        </Button>
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="font-display text-[9px] uppercase tracking-widest text-brand">
+            Modo sorteio de decks
+          </p>
+          <h1 className="mt-2 font-display text-2xl font-bold text-ink">Pokémon Night</h1>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+            <ArrowLeft size={14} />
+            Modos
+          </Button>
+          <Button variant="secondary" size="sm" onClick={reiniciar}>
+            <RotateCcw size={14} />
+            Novo Campeonato
+          </Button>
+        </div>
       </header>
 
       {error && (
@@ -58,6 +77,15 @@ export function HomePage() {
       )}
 
       {phase === 'revealed' && champion && <ChampionCard champion={champion} />}
+
+      {tournament.status === 'registrando-jogadores' && (
+        <DeckSelection
+          selectedDecks={tournament.decks}
+          requiredDeckCount={tournament.players.length}
+          maximumDeckCount={MAX_DRAW_DECKS}
+          onChange={definirDecks}
+        />
+      )}
 
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
@@ -67,7 +95,9 @@ export function HomePage() {
           <Button
             size="sm"
             onClick={sortearDecks}
-            disabled={tournament.status !== 'registrando-jogadores'}
+            disabled={
+              tournament.status !== 'registrando-jogadores' || !quantidadeDeDecksCorreta
+            }
           >
             <Shuffle size={14} />
             Sortear Decks

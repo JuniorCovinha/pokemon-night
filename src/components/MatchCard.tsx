@@ -26,7 +26,7 @@ export function MatchCard({
   const podeEscolherVencedor = Boolean(player1 && player2 && !match.winnerId);
 
   return (
-    <Card className="!p-3">
+    <Card className="light-card !p-3">
       <MatchSlot
         player={player1}
         deck={resolveDeck(match.player1Id)}
@@ -71,7 +71,7 @@ function MatchSlot({
 }: MatchSlotProps) {
   if (!player) {
     return (
-      <div className="flex items-center gap-2 rounded-lg px-2 py-2 font-sans text-sm text-ink-soft/60">
+      <div className="flex items-center gap-2 rounded-lg px-2 py-2 font-sans text-sm text-ink/60">
         Aguardando...
       </div>
     );
@@ -91,14 +91,28 @@ function MatchSlot({
         ${clicavel ? 'cursor-pointer hover:-translate-y-0.5 hover:bg-black/5' : 'cursor-default'}
       `}
     >
-      <span className="flex min-w-0 items-center gap-2">
-        {deck && (
+      <span className="flex min-w-0 items-center gap-2.5">
+        {deck?.miniatura || deck?.imagem ? (
+          <img
+            src={deck.miniatura ?? deck.imagem}
+            alt={`Pokémon principal do deck ${deck.nome}`}
+            loading="lazy"
+            className="match-pokemon-thumbnail h-10 w-10 shrink-0 rounded-lg bg-surface-alt object-contain"
+          />
+        ) : deck ? (
           <span
-            className="h-1.5 w-1.5 shrink-0 rounded-full"
+            className="h-8 w-2 shrink-0 rounded-full"
             style={{ backgroundColor: getTypeColor(deck.tipoPrincipal) }}
           />
-        )}
-        <span className="truncate">{player.name}</span>
+        ) : null}
+        <span className="min-w-0">
+          <span className="block truncate">{player.name}</span>
+          {deck && (
+            <span className="mt-0.5 block truncate text-xs font-normal text-ink-soft">
+              {deck.nome}
+            </span>
+          )}
+        </span>
       </span>
       {isWinner && <Check size={14} className="shrink-0" />}
     </button>

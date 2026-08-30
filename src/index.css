@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;500;600;700&display=swap');
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ============================================================
    DESIGN SYSTEM — Pokémon Night
@@ -15,16 +15,17 @@
   --font-sans: 'Pixelify Sans', system-ui, sans-serif;
 
   /* ---------- Cores ---------- */
-  --color-canvas: #f4f2ea;       /* fundo — bege claro tipo tela LCD, não branco puro */
+  --color-canvas: #f4f2ea; /* fundo — bege claro tipo tela LCD, não branco puro */
   --color-surface: #ffffff;
   --color-surface-alt: #eeece1;
-  --color-ink: #1c1a17;          /* quase-preto quente, usado em bordas e sombras duras */
-  --color-ink-soft: #6f6a5e;
+  --color-ink: #1c1a17; /* quase-preto quente, usado em bordas e sombras duras */
+  --color-ink-soft: #ffe680; /* amarelo claro para textos sobre as telas escuras */
+  --color-menu-muted: #6f6a5e; /* texto secundário do menu, que tem fundo claro */
   --color-line: #ddd8c8;
 
-  --color-brand: #ee1c25;        /* vermelho de marca — uso escasso, ações primárias */
+  --color-brand: #ee1c25; /* vermelho de marca — uso escasso, ações primárias */
   --color-brand-soft: #fdeceb;
-  --color-champion: #ffcb05;     /* dourado — reservado ao momento do campeão */
+  --color-champion: #ffcb05; /* dourado — reservado ao momento do campeão */
   --color-champion-soft: #fff9e0;
 
   --color-success: #3a9a5c;
@@ -63,7 +64,9 @@ body {
   font-family: var(--font-sans);
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   font-family: var(--font-display);
   letter-spacing: 0.02em;
 }
@@ -74,10 +77,18 @@ h1, h2, h3 {
    densos de informação (inputs, listas) atrapalharia a leitura. */
 .pixel-corners {
   clip-path: polygon(
-    0 8px, 8px 8px, 8px 0,
-    calc(100% - 8px) 0, calc(100% - 8px) 8px, 100% 8px,
-    100% calc(100% - 8px), calc(100% - 8px) calc(100% - 8px), calc(100% - 8px) 100%,
-    8px 100%, 8px calc(100% - 8px), 0 calc(100% - 8px)
+    0 8px,
+    8px 8px,
+    8px 0,
+    calc(100% - 8px) 0,
+    calc(100% - 8px) 8px,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    8px calc(100% - 8px),
+    0 calc(100% - 8px)
   );
 }
 
@@ -118,7 +129,8 @@ h1, h2, h3 {
 
 /* Brilho pulsante quando o campeão é definido */
 @keyframes championGlow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(255, 203, 5, 0.55);
   }
   50% {
@@ -165,6 +177,39 @@ h1, h2, h3 {
 
 .animate-pixel-pop {
   animation: pixelPop 600ms var(--ease-snap) both;
+}
+
+/* Escala maior apenas no modo campeonato, pensado para leitura à distância. */
+.championship-mode .text-sm {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.championship-mode .text-xs {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.championship-mode .text-\[10px\],
+.championship-mode .text-\[9px\] {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.championship-mode .match-pokemon-thumbnail {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Cartões claros precisam usar texto escuro mesmo quando a tela ao redor
+   utiliza o amarelo claro como cor secundária. */
+.light-card,
+.light-card .text-ink-soft {
+  color: var(--color-ink);
+}
+
+.light-card input::placeholder {
+  color: color-mix(in srgb, var(--color-ink) 55%, transparent);
 }
 
 /* Crossfade do fundo (idle -> transição -> revelado). Elemento

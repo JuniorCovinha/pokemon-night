@@ -9,6 +9,10 @@ const TCGDEX_RETRY_CACHE_KEY = 'pokemon-night:tcgdex-retry-after';
 const TCGDEX_RETRY_DELAY = 5 * 60 * 1000;
 const POKEAPI_ARTWORK_URL =
   'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork';
+const POKEAPI_SPRITE_URL =
+  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
+const POKEAPI_SHOWDOWN_URL =
+  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown';
 const SEARCH_PAGE_SIZE = 16;
 
 export type TcgDexCardSummary = {
@@ -20,7 +24,10 @@ export type TcgDexCardSummary = {
 
 export type TcgDexCard = TcgDexCardSummary & {
   category: string;
+  dexId?: number[];
   types?: string[];
+  spriteImage?: string;
+  animatedImage?: string;
   source?: CardCatalogSource;
   set?: {
     id: string;
@@ -59,6 +66,9 @@ type PokeApiPokemon = {
     front_default?: string | null;
     other?: {
       'official-artwork'?: {
+        front_default?: string | null;
+      };
+      showdown?: {
         front_default?: string | null;
       };
     };
@@ -181,6 +191,14 @@ function obterIdPokeApi(resourceUrl: string): string | undefined {
 
 function obterImagemOficialPokeApi(pokemonId: string | number): string {
   return `${POKEAPI_ARTWORK_URL}/${pokemonId}.png`;
+}
+
+function obterSpritePokeApi(pokemonId: string | number): string {
+  return `${POKEAPI_SPRITE_URL}/${pokemonId}.png`;
+}
+
+function obterImagemAnimadaPokeApi(pokemonId: string | number): string {
+  return `${POKEAPI_SHOWDOWN_URL}/${pokemonId}.gif`;
 }
 
 function lerCacheDaListaPokeApi(): PokeApiListCache | undefined {
@@ -331,6 +349,7 @@ export async function obterPokemonPokeApi(
   }
 
   const officialArtwork = data.sprites.other?.['official-artwork']?.front_default;
+  const animatedSprite = data.sprites.other?.showdown?.front_default;
   const types = [...data.types]
     .sort((first, second) => first.slot - second.slot)
     .map((item) => item.type.name);
@@ -343,6 +362,10 @@ export async function obterPokemonPokeApi(
     types,
     image:
       officialArtwork ?? data.sprites.front_default ?? obterImagemOficialPokeApi(data.id),
+    ...(data.sprites.front_default
+      ? { spriteImage: data.sprites.front_default }
+      : { spriteImage: obterSpritePokeApi(data.id) }),
+    ...(animatedSprite ? { animatedImage: animatedSprite } : {}),
     source: 'pokeapi',
   };
 }
@@ -421,7 +444,18 @@ export async function obterCartaTcgDex(
   }
 
   const card = data as TcgDexCard;
-  return { ...card, localId: String(card.localId), source: 'tcgdex' };
+  const pokemonId = card.dexId?.[0];
+  return {
+    ...card,
+    localId: String(card.localId),
+    ...(pokemonId
+      ? {
+          spriteImage: obterSpritePokeApi(pokemonId),
+          animatedImage: obterImagemAnimadaPokeApi(pokemonId),
+        }
+      : {}),
+    source: 'tcgdex',
+  };
 }
 
 /** Obtém detalhes na mesma fonte que produziu o resultado da busca. */
@@ -532,5 +566,7 @@ export function criarDeckDaCartaTcgDex(card: TcgDexCard): Deck {
     tipoPrincipal,
     imagem: obterImagemTcgDex(card.image, 'high'),
     miniatura: obterImagemTcgDex(card.image, 'low'),
+    ...(card.spriteImage ? { imagemSprite: card.spriteImage } : {}),
+    ...(card.animatedImage ? { imagemAnimada: card.animatedImage } : {}),
   };
 }

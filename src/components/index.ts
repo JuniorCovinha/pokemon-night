@@ -1,5 +1,6 @@
 export * from './PlayerCard';
 export * from './DeckCard';
+export * from './DeckPokemonImage';
 export * from './DeckGrid';
 export * from './MatchCard';
 export * from './TournamentBracket';

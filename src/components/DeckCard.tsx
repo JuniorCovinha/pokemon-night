@@ -1,5 +1,7 @@
 import { getTypeColor } from '@/constants/pokemonTypes';
 import { Card, Badge } from '@/components/ui';
+import { DeckPokemonImage } from './DeckPokemonImage';
+import { hasDeckPokemonImage } from './deckMedia';
 import type { Deck } from '@/types';
 
 type DeckCardProps = {
@@ -28,15 +30,14 @@ export function DeckCard({
   justCaptured = false,
 }: DeckCardProps) {
   const corDoTipo = getTypeColor(deck.tipoPrincipal);
-  const imagem = deck.miniatura ?? deck.imagem;
 
   if (compact) {
     return (
       <Card className="light-card flex min-h-16 items-center gap-3 !p-3 !pr-12">
-        {imagem ? (
-          <img
-            src={imagem}
-            alt={`Pokémon principal do deck ${deck.nome}`}
+        {hasDeckPokemonImage(deck) ? (
+          <DeckPokemonImage
+            deck={deck}
+            variant="artwork"
             loading="lazy"
             className="h-10 w-10 shrink-0 rounded-lg bg-surface-alt object-contain"
           />
@@ -69,10 +70,10 @@ export function DeckCard({
         ${justCaptured ? 'animate-capture' : ''}
       `}
     >
-      {imagem && (
-        <img
-          src={imagem}
-          alt={`Carta principal do deck ${deck.nome}`}
+      {hasDeckPokemonImage(deck) && (
+        <DeckPokemonImage
+          deck={deck}
+          variant="animated"
           loading="lazy"
           className="mb-4 aspect-[245/337] w-full rounded-xl bg-surface-alt object-contain"
         />

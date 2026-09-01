@@ -38,6 +38,8 @@ export type Deck = {
   // Mídia
   imagem?: string;
   miniatura?: string;
+  imagemSprite?: string;
+  imagemAnimada?: string;
   videoTutorial?: string;
 
   // Identidade do deck

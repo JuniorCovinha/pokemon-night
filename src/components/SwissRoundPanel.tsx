@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Check, CheckCircle2, Clock3, Flag, Play, RotateCcw, Swords } from 'lucide-react';
 import { getTypeColor } from '@/constants/pokemonTypes';
 import { Button, Card } from '@/components/ui';
+import { DeckPokemonImage } from './DeckPokemonImage';
+import { hasDeckPokemonImage } from './deckMedia';
 import { analisarResultadoDosJogos, type SwissMatchResultInput } from '@/services';
 import type {
   Deck,
@@ -40,9 +42,10 @@ function PlayerRow({ player, deck, isWinner = false }: PlayerRowProps) {
         isWinner ? 'bg-success-soft ring-1 ring-success/30' : 'bg-surface-alt'
       }`}
     >
-      {deck?.miniatura || deck?.imagem ? (
-        <img
-          src={deck.miniatura ?? deck.imagem}
+      {hasDeckPokemonImage(deck) && deck ? (
+        <DeckPokemonImage
+          deck={deck}
+          variant="sprite"
           alt={deck.nome}
           className="h-12 w-12 shrink-0 rounded-lg object-contain"
         />

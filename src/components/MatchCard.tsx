@@ -1,6 +1,8 @@
 import { Check } from 'lucide-react';
 import { getTypeColor } from '@/constants/pokemonTypes';
 import { Card } from '@/components/ui';
+import { DeckPokemonImage } from './DeckPokemonImage';
+import { hasDeckPokemonImage } from './deckMedia';
 import type { Deck, Match, Player } from '@/types';
 
 type MatchCardProps = {
@@ -92,10 +94,10 @@ function MatchSlot({
       `}
     >
       <span className="flex min-w-0 items-center gap-2.5">
-        {deck?.miniatura || deck?.imagem ? (
-          <img
-            src={deck.miniatura ?? deck.imagem}
-            alt={`Pokémon principal do deck ${deck.nome}`}
+        {hasDeckPokemonImage(deck) && deck ? (
+          <DeckPokemonImage
+            deck={deck}
+            variant="sprite"
             loading="lazy"
             className="match-pokemon-thumbnail h-10 w-10 shrink-0 rounded-lg bg-surface-alt object-contain"
           />

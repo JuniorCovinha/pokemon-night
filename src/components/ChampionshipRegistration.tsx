@@ -5,6 +5,8 @@ import { MAX_SWISS_PLAYERS, MIN_SWISS_PLAYERS } from '@/constants/tournament';
 import { criarConfiguracaoSuicaPadrao, recomendarRodadasSuicas } from '@/services';
 import { generateId } from '@/utils';
 import { Button, Card, Input } from '@/components/ui';
+import { DeckPokemonImage } from './DeckPokemonImage';
+import { hasDeckPokemonImage } from './deckMedia';
 import { PokemonDeckSearch } from './PokemonDeckSearch';
 import type { Deck, MatchFormat, TcgFormat, TournamentConfig } from '@/types';
 import type { SwissTournamentSetup } from '@/services';
@@ -290,9 +292,10 @@ export function ChampionshipRegistration({ onConfirm }: ChampionshipRegistration
 
               {draft.deck ? (
                 <div className="flex items-center gap-3 rounded-xl border border-line bg-surface-alt p-2.5">
-                  {draft.deck.miniatura || draft.deck.imagem ? (
-                    <img
-                      src={draft.deck.miniatura ?? draft.deck.imagem}
+                  {hasDeckPokemonImage(draft.deck) ? (
+                    <DeckPokemonImage
+                      deck={draft.deck}
+                      variant="sprite"
                       alt={draft.deck.nome}
                       className="h-14 w-14 shrink-0 rounded-lg object-contain"
                     />

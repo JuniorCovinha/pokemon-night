@@ -80,6 +80,26 @@ describe('integração com a TCGdex', () => {
     ]);
   });
 
+  it('adiciona o GIF da PokéAPI ao carregar uma carta com dexId', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ ...sharpedo, dexId: [319] }),
+      }),
+    );
+
+    const card = await obterCartaDoCatalogo({ ...sharpedo, source: 'tcgdex' });
+    const deck = criarDeckDaCartaTcgDex(card);
+
+    expect(deck.imagemAnimada).toBe(
+      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/319.gif',
+    );
+    expect(deck.imagemSprite).toBe(
+      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/319.png',
+    );
+  });
+
   it('usa a PokéAPI quando a TCGdex está indisponível', async () => {
     vi.stubGlobal(
       'fetch',
@@ -150,6 +170,9 @@ describe('integração com a TCGdex', () => {
                   'official-artwork': {
                     front_default: 'https://example.com/lucario.png',
                   },
+                  showdown: {
+                    front_default: 'https://example.com/lucario.gif',
+                  },
                 },
               },
             }),
@@ -167,6 +190,8 @@ describe('integração com a TCGdex', () => {
       nome: 'Lucario',
       tipoPrincipal: 'Lutador',
       imagem: 'https://example.com/lucario.png',
+      imagemSprite: 'https://example.com/lucario-sprite.png',
+      imagemAnimada: 'https://example.com/lucario.gif',
     });
     expect(deck).not.toHaveProperty('tcgdexCardId');
   });

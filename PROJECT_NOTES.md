@@ -74,6 +74,12 @@ src/
 8. Alias de import `@/` aponta para `src/` (configurado em
    `vite.config.ts`, `tsconfig.app.json` e `vitest.config.ts`).
 
+9. **Mídia da PokéAPI:** a busca e a escolha de decks exibem artwork estática. O
+   `dexId` da TCGdex ou o retorno da PokéAPI podem preencher `imagemSprite` e
+   `imagemAnimada`. Imagens pequenas, como inscrições e chaves, usam sprites; GIFs do
+   Pokémon Showdown ficam restritos aos decks sorteados e ao campeão. O componente
+   `DeckPokemonImage` centraliza essas variantes e seus fallbacks.
+
 ## Estado atual do gerenciador Suíço
 
 Em 31/08/2026 foi concluída a primeira fatia do novo modo Campeonato:
@@ -105,7 +111,7 @@ explicações entre telas.
 
 ## Testes
 
-86 testes com Vitest, cobrindo:
+87 testes com Vitest, cobrindo:
 
 - `services/deckAssignmentService.test.ts` — sorteio de decks
 - `services/bracketService.test.ts` — geração de chave e propagação de

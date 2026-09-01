@@ -1,5 +1,7 @@
 import { Trophy } from 'lucide-react';
 import { getTypeColor } from '@/constants/pokemonTypes';
+import { DeckPokemonImage } from './DeckPokemonImage';
+import { hasDeckPokemonImage } from './deckMedia';
 import type { Champion } from '@/types';
 
 type ChampionCardProps = {
@@ -7,8 +9,6 @@ type ChampionCardProps = {
 };
 
 export function ChampionCard({ champion }: ChampionCardProps) {
-  const pokemonImage = champion.deck.imagem ?? champion.deck.miniatura;
-
   return (
     <div className="light-card pixel-corners animate-slide-in-card animate-champion-glow relative bg-champion-soft p-8 text-center shadow-[var(--shadow-pixel-champion)]">
       <PixelBurst />
@@ -21,9 +21,10 @@ export function ChampionCard({ champion }: ChampionCardProps) {
         Campeão da noite
       </p>
 
-      {pokemonImage && (
-        <img
-          src={pokemonImage}
+      {hasDeckPokemonImage(champion.deck) && (
+        <DeckPokemonImage
+          deck={champion.deck}
+          variant="animated"
           alt={`Pokémon principal do deck campeão ${champion.deck.nome}`}
           className="mx-auto mt-5 max-h-72 w-full max-w-sm object-contain drop-shadow-[0_12px_12px_rgba(28,26,23,0.22)] sm:max-h-80"
         />

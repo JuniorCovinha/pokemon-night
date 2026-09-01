@@ -1,6 +1,10 @@
 import { createContext } from 'react';
 import type { Champion, Deck, Tournament } from '@/types';
-import type { PlayerDeckRegistration } from '@/services';
+import type {
+  PlayerDeckRegistration,
+  SwissMatchResultInput,
+  SwissTournamentSetup,
+} from '@/services';
 
 export type TournamentContextValue = {
   tournament: Tournament;
@@ -10,6 +14,11 @@ export type TournamentContextValue = {
   sortearDecks: () => void;
   gerarChave: () => void;
   iniciarCampeonatoComDecks: (registrations: PlayerDeckRegistration[]) => void;
+  configurarCampeonatoSuico: (setup: SwissTournamentSetup) => void;
+  gerarPrimeiraRodadaSuica: () => void;
+  iniciarRodadaSuica: () => void;
+  registrarResultadoSuico: (matchId: string, result: SwissMatchResultInput) => void;
+  finalizarRodadaSuica: () => void;
   registrarVencedor: (matchId: string, winnerId: string) => void;
   desfazerVencedor: (matchId: string) => void;
   renomearJogador: (playerId: string, novoNome: string) => void;

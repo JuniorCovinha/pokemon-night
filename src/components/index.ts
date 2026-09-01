@@ -8,3 +8,6 @@ export * from './ChampionBackdrop';
 export * from './DeckSelection';
 export * from './PokemonDeckSearch';
 export * from './ChampionshipRegistration';
+export * from './TournamentSetupSummary';
+export * from './NeutralBackdrop';
+export * from './SwissRoundPanel';

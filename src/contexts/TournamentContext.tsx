@@ -41,6 +41,16 @@ export function TournamentProvider({
           type: 'INICIAR_CAMPEONATO_COM_DECKS',
           payload: { registrations },
         }),
+      configurarCampeonatoSuico: (setup) =>
+        dispatch({ type: 'CONFIGURAR_CAMPEONATO_SUICO', payload: setup }),
+      gerarPrimeiraRodadaSuica: () => dispatch({ type: 'GERAR_PRIMEIRA_RODADA_SUICA' }),
+      iniciarRodadaSuica: () => dispatch({ type: 'INICIAR_RODADA_SUICA' }),
+      registrarResultadoSuico: (matchId, result) =>
+        dispatch({
+          type: 'REGISTRAR_RESULTADO_SUICO',
+          payload: { matchId, result },
+        }),
+      finalizarRodadaSuica: () => dispatch({ type: 'FINALIZAR_RODADA_SUICA' }),
       registrarVencedor: (matchId, winnerId) =>
         dispatch({ type: 'REGISTRAR_VENCEDOR', payload: { matchId, winnerId } }),
       desfazerVencedor: (matchId) =>

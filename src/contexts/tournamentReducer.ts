@@ -7,8 +7,17 @@ import {
   reiniciarCampeonato,
   definirDecksDoTorneio,
   iniciarCampeonatoComDecksDefinidos,
+  configurarCampeonatoSuico,
+  gerarPrimeiraRodadaSuica,
+  iniciarRodadaSuica,
+  registrarResultadoPartidaSuica,
+  finalizarRodadaSuica,
 } from '@/services';
-import type { PlayerDeckRegistration } from '@/services';
+import type {
+  PlayerDeckRegistration,
+  SwissMatchResultInput,
+  SwissTournamentSetup,
+} from '@/services';
 import type { Deck, Tournament } from '@/types';
 
 export type TournamentState = {
@@ -25,6 +34,14 @@ export type TournamentAction =
       type: 'INICIAR_CAMPEONATO_COM_DECKS';
       payload: { registrations: PlayerDeckRegistration[] };
     }
+  | { type: 'CONFIGURAR_CAMPEONATO_SUICO'; payload: SwissTournamentSetup }
+  | { type: 'GERAR_PRIMEIRA_RODADA_SUICA' }
+  | { type: 'INICIAR_RODADA_SUICA' }
+  | {
+      type: 'REGISTRAR_RESULTADO_SUICO';
+      payload: { matchId: string; result: SwissMatchResultInput };
+    }
+  | { type: 'FINALIZAR_RODADA_SUICA' }
   | { type: 'REGISTRAR_VENCEDOR'; payload: { matchId: string; winnerId: string } }
   | { type: 'DESFAZER_VENCEDOR'; payload: { matchId: string } }
   | { type: 'RENOMEAR_JOGADOR'; payload: { playerId: string; novoNome: string } }
@@ -67,6 +84,34 @@ export function tournamentReducer(
           ),
           error: null,
         };
+
+      case 'CONFIGURAR_CAMPEONATO_SUICO':
+        return {
+          tournament: configurarCampeonatoSuico(state.tournament, action.payload),
+          error: null,
+        };
+
+      case 'GERAR_PRIMEIRA_RODADA_SUICA':
+        return {
+          tournament: gerarPrimeiraRodadaSuica(state.tournament),
+          error: null,
+        };
+
+      case 'INICIAR_RODADA_SUICA':
+        return { tournament: iniciarRodadaSuica(state.tournament), error: null };
+
+      case 'REGISTRAR_RESULTADO_SUICO':
+        return {
+          tournament: registrarResultadoPartidaSuica(
+            state.tournament,
+            action.payload.matchId,
+            action.payload.result,
+          ),
+          error: null,
+        };
+
+      case 'FINALIZAR_RODADA_SUICA':
+        return { tournament: finalizarRodadaSuica(state.tournament), error: null };
 
       case 'REGISTRAR_VENCEDOR':
         return {

@@ -6,6 +6,8 @@ import {
   ChampionshipRegistration,
   PlayerCard,
   TournamentBracket,
+  TournamentSetupSummary,
+  SwissRoundPanel,
 } from '@/components';
 import { Button } from '@/components/ui';
 import { useChampionReveal } from '@/hooks/useChampionReveal';
@@ -17,13 +19,25 @@ export function ChampionshipPage() {
     tournament,
     champion,
     error,
-    iniciarCampeonatoComDecks,
+    configurarCampeonatoSuico,
+    gerarPrimeiraRodadaSuica,
+    iniciarRodadaSuica,
+    registrarResultadoSuico,
+    finalizarRodadaSuica,
     registrarVencedor,
     desfazerVencedor,
     reiniciar,
   } = useTournament();
   const { phase, handleTransitionEnded } = useChampionReveal(tournament.championId);
   const registrationOpen = tournament.status === 'registrando-jogadores';
+  const swissSetupReady =
+    tournament.status === 'inscricoes-confirmadas' && Boolean(tournament.config);
+  const currentSwissRound = tournament.swissRounds.at(-1);
+  const currentSwissMatches = currentSwissRound
+    ? tournament.tournamentMatches.filter((match) =>
+        currentSwissRound.matchIds.includes(match.id),
+      )
+    : [];
 
   function deckForPlayer(playerId: string) {
     const assignment = tournament.assignments.find((item) => item.playerId === playerId);
@@ -69,9 +83,31 @@ export function ChampionshipPage() {
       {phase === 'revealed' && champion && <ChampionCard champion={champion} />}
 
       {registrationOpen ? (
-        <ChampionshipRegistration onStart={iniciarCampeonatoComDecks} />
+        <ChampionshipRegistration onConfirm={configurarCampeonatoSuico} />
       ) : (
         <>
+          {swissSetupReady && tournament.config && (
+            <TournamentSetupSummary
+              config={tournament.config}
+              playerCount={tournament.players.length}
+              onGenerateFirstRound={gerarPrimeiraRodadaSuica}
+            />
+          )}
+
+          {currentSwissRound && (
+            <SwissRoundPanel
+              round={currentSwissRound}
+              matches={currentSwissMatches}
+              players={tournament.players}
+              decks={tournament.decks}
+              assignments={tournament.assignments}
+              matchFormat={tournament.config?.matchFormat ?? 'best-of-three'}
+              onStartRound={iniciarRodadaSuica}
+              onSubmitResult={registrarResultadoSuico}
+              onFinishRound={finalizarRodadaSuica}
+            />
+          )}
+
           <section className="flex flex-col gap-4">
             <h2 className="font-display text-base font-semibold uppercase tracking-wide text-ink-soft">
               Inscritos

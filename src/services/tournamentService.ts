@@ -29,6 +29,10 @@ export function criarTorneio(
     players: [...players],
     decks: [...decks],
     assignments: [],
+    entries: [],
+    deckRegistrations: [],
+    swissRounds: [],
+    tournamentMatches: [],
     createdAt: new Date().toISOString(),
   };
 }

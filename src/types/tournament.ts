@@ -1,6 +1,12 @@
 import type { Player } from './player';
 import type { Deck } from './deck';
 import type { Bracket } from './bracket';
+import type {
+  TournamentConfig,
+  TournamentDeckRegistration,
+  TournamentEntry,
+} from './tournamentConfig';
+import type { SwissRound, TournamentMatch } from './tournamentSwiss';
 
 /**
  * Vínculo entre um jogador e o deck sorteado para ele.
@@ -19,6 +25,11 @@ export type PlayerDeckAssignment = {
  */
 export type TournamentStatus =
   | 'registrando-jogadores'
+  | 'inscricoes-confirmadas'
+  | 'rodada-suica-pareada'
+  | 'rodada-suica-ativa'
+  | 'rodada-suica-revisao'
+  | 'rodada-suica-concluida'
   | 'decks-sorteados'
   | 'chave-gerada'
   | 'em-andamento'
@@ -36,6 +47,11 @@ export type Tournament = {
   players: Player[];
   decks: Deck[];
   assignments: PlayerDeckAssignment[];
+  config?: TournamentConfig;
+  entries: TournamentEntry[];
+  deckRegistrations: TournamentDeckRegistration[];
+  swissRounds: SwissRound[];
+  tournamentMatches: TournamentMatch[];
   bracket?: Bracket;
   championId?: string;
   createdAt: string;

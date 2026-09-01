@@ -9,6 +9,11 @@ export const DEFAULT_BRACKET_SIZE = 4;
 /** Quantidade máxima de opções disponíveis no modo Sorteio de decks. */
 export const MAX_DRAW_DECKS = 10;
 
+export const MIN_SWISS_PLAYERS = 4;
+export const MAX_SWISS_PLAYERS = 16;
+export const DEFAULT_ROUND_DURATION_MINUTES = 50;
+export const LOCAL_TOURNAMENT_RULES_VERSION = 'local-2026-08';
+
 export const ROUND_NAMES_BY_MATCHES_REMAINING: Record<number, string> = {
   1: 'Final',
   2: 'Semifinal',

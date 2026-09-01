@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { tournamentReducer, type TournamentState } from './tournamentReducer';
-import { criarTorneio } from '@/services';
+import { criarConfiguracaoSuicaPadrao, criarTorneio } from '@/services';
 import type { Deck, Player } from '@/types';
 
 const players: Player[] = [
@@ -66,6 +66,92 @@ describe('tournamentReducer', () => {
       })),
     );
     expect(novoEstado.tournament.bracket?.rounds).toHaveLength(2);
+  });
+
+  it('CONFIGURAR_CAMPEONATO_SUICO confirma quantidade ímpar sem gerar chave', () => {
+    const registrations = Array.from({ length: 5 }, (_, index) => ({
+      player: { id: `p${index + 1}`, name: `Jogador ${index + 1}` },
+      deck: { id: `d${index + 1}`, nome: `Deck ${index + 1}` },
+    }));
+    const novoEstado = tournamentReducer(
+      { tournament: criarTorneio([], []), error: null },
+      {
+        type: 'CONFIGURAR_CAMPEONATO_SUICO',
+        payload: {
+          config: criarConfiguracaoSuicaPadrao(registrations.length),
+          registrations,
+        },
+      },
+    );
+
+    expect(novoEstado.tournament.status).toBe('inscricoes-confirmadas');
+    expect(novoEstado.tournament.players).toHaveLength(5);
+    expect(novoEstado.tournament.bracket).toBeUndefined();
+    expect(novoEstado.error).toBeNull();
+  });
+
+  it('GERAR_PRIMEIRA_RODADA_SUICA cria mesas e bye após as inscrições', () => {
+    const registrations = Array.from({ length: 5 }, (_, index) => ({
+      player: { id: `p${index + 1}`, name: `Jogador ${index + 1}` },
+      deck: { id: `d${index + 1}`, nome: `Deck ${index + 1}` },
+    }));
+    let state = tournamentReducer(
+      { tournament: criarTorneio([], []), error: null },
+      {
+        type: 'CONFIGURAR_CAMPEONATO_SUICO',
+        payload: {
+          config: criarConfiguracaoSuicaPadrao(registrations.length),
+          registrations,
+        },
+      },
+    );
+
+    state = tournamentReducer(state, { type: 'GERAR_PRIMEIRA_RODADA_SUICA' });
+
+    expect(state.tournament.status).toBe('rodada-suica-pareada');
+    expect(state.tournament.tournamentMatches).toHaveLength(3);
+    expect(
+      state.tournament.tournamentMatches.filter((match) => match.result?.kind === 'bye'),
+    ).toHaveLength(1);
+    expect(state.error).toBeNull();
+  });
+
+  it('completa o ciclo iniciar, registrar, revisar e encerrar uma rodada Suíça', () => {
+    const registrations = players.map((player, index) => ({
+      player,
+      deck: decks[index],
+    }));
+    let state = tournamentReducer(
+      { tournament: criarTorneio([], []), error: null },
+      {
+        type: 'CONFIGURAR_CAMPEONATO_SUICO',
+        payload: {
+          config: criarConfiguracaoSuicaPadrao(registrations.length),
+          registrations,
+        },
+      },
+    );
+    state = tournamentReducer(state, { type: 'GERAR_PRIMEIRA_RODADA_SUICA' });
+    state = tournamentReducer(state, { type: 'INICIAR_RODADA_SUICA' });
+
+    expect(state.tournament.status).toBe('rodada-suica-ativa');
+
+    for (const match of state.tournament.tournamentMatches) {
+      state = tournamentReducer(state, {
+        type: 'REGISTRAR_RESULTADO_SUICO',
+        payload: {
+          matchId: match.id,
+          result: {
+            gameOutcomes: ['player1-win', 'player1-win'],
+          },
+        },
+      });
+    }
+
+    expect(state.tournament.status).toBe('rodada-suica-revisao');
+    state = tournamentReducer(state, { type: 'FINALIZAR_RODADA_SUICA' });
+    expect(state.tournament.status).toBe('rodada-suica-concluida');
+    expect(state.error).toBeNull();
   });
 
   it('GERAR_CHAVE antes de sortear decks produz erro e mantém o estado anterior', () => {

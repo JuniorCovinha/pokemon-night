@@ -7,6 +7,11 @@ import {
   renomearJogador,
   desfazerVencedorDoTorneio,
 } from './tournamentService';
+import {
+  configurarCampeonatoSuico,
+  criarConfiguracaoSuicaPadrao,
+  recomendarRodadasSuicas,
+} from './tournamentSetupService';
 import { sortearConfrontos, gerarBracket, registrarVencedor } from './bracketService';
 import type { Deck, Player } from '@/types';
 
@@ -19,6 +24,96 @@ const decks: Deck[] = [
   { id: 'd1', nome: 'Charizard ex' },
   { id: 'd2', nome: 'Lugia VSTAR' },
 ];
+
+function createRegistrations(count: number) {
+  return Array.from({ length: count }, (_, index) => ({
+    player: { id: `player-${index + 1}`, name: `Jogador ${index + 1}` },
+    deck: { id: `deck-${index + 1}`, nome: `Deck ${index + 1}` },
+  }));
+}
+
+describe('configuração do campeonato Suíço', () => {
+  it.each([
+    [4, 3],
+    [5, 3],
+    [8, 3],
+    [9, 4],
+    [16, 4],
+  ])('para %i jogadores recomenda %i rodadas', (playerCount, expectedRounds) => {
+    expect(recomendarRodadasSuicas(playerCount)).toBe(expectedRounds);
+  });
+
+  it.each([5, 7, 9])('aceita %i jogadores sem gerar chave eliminatória', (count) => {
+    const atualizado = configurarCampeonatoSuico(criarTorneio([], []), {
+      config: criarConfiguracaoSuicaPadrao(count),
+      registrations: createRegistrations(count),
+    });
+
+    expect(atualizado.status).toBe('inscricoes-confirmadas');
+    expect(atualizado.players).toHaveLength(count);
+    expect(atualizado.entries).toHaveLength(count);
+    expect(atualizado.deckRegistrations).toHaveLength(count);
+    expect(atualizado.bracket).toBeUndefined();
+  });
+
+  it.each([3, 17])('rejeita %i jogadores fora do limite local', (count) => {
+    expect(() =>
+      configurarCampeonatoSuico(criarTorneio([], []), {
+        config: {
+          ...criarConfiguracaoSuicaPadrao(4),
+          swissRoundCount: 3,
+        },
+        registrations: createRegistrations(count),
+      }),
+    ).toThrow(/entre 4 e 16 jogadores/);
+  });
+
+  it('normaliza o nome do evento e registra Top 4', () => {
+    const registrations = createRegistrations(4);
+    const atualizado = configurarCampeonatoSuico(criarTorneio([], []), {
+      config: {
+        ...criarConfiguracaoSuicaPadrao(4),
+        name: '  Liga de sábado  ',
+        structure: 'swiss-top-cut',
+        topCutSize: 4,
+      },
+      registrations,
+    });
+
+    expect(atualizado.config).toMatchObject({
+      name: 'Liga de sábado',
+      structure: 'swiss-top-cut',
+      topCutSize: 4,
+    });
+    expect(atualizado.assignments[0]).toEqual({
+      playerId: registrations[0].player.id,
+      deckId: registrations[0].deck.id,
+    });
+  });
+
+  it('rejeita nomes repetidos e decks ausentes', () => {
+    const repeatedNames = createRegistrations(4).map((registration) => ({
+      ...registration,
+      player: { ...registration.player, name: 'Mesmo nome' },
+    }));
+    const missingDeck = createRegistrations(4);
+    missingDeck[0] = { ...missingDeck[0], deck: { id: '', nome: '' } };
+
+    expect(() =>
+      configurarCampeonatoSuico(criarTorneio([], []), {
+        config: criarConfiguracaoSuicaPadrao(4),
+        registrations: repeatedNames,
+      }),
+    ).toThrow(/nomes diferentes/);
+
+    expect(() =>
+      configurarCampeonatoSuico(criarTorneio([], []), {
+        config: criarConfiguracaoSuicaPadrao(4),
+        registrations: missingDeck,
+      }),
+    ).toThrow(/deck definido/);
+  });
+});
 
 describe('definirDecksDoTorneio', () => {
   it('substitui os decks disponíveis antes do sorteio', () => {

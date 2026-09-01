@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Shuffle, Swords } from 'lucide-react';
 import { Card } from '@/components/ui';
+import { NeutralBackdrop } from '@/components';
 
 const MODES = [
   {
@@ -24,14 +25,16 @@ const MODES = [
 export function ModeSelectionPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center gap-10 px-6 py-14">
+      <NeutralBackdrop />
+
       <header className="text-center">
-        <p className="font-display text-[10px] uppercase tracking-[0.24em] text-brand">
+        <p className="font-display text-[10px] uppercase tracking-[0.24em] text-champion">
           Pokémon Night
         </p>
-        <h1 className="mt-4 font-display text-2xl font-bold text-ink sm:text-3xl">
+        <h1 className="mt-4 font-display text-2xl font-bold text-ink-soft sm:text-3xl">
           Escolha o modo
         </h1>
-        <p className="mx-auto mt-3 max-w-xl text-sm text-menu-muted sm:text-base">
+        <p className="mx-auto mt-3 max-w-xl text-sm text-ink-soft sm:text-base">
           Defina como os jogadores e decks entrarão no campeonato.
         </p>
       </header>
@@ -42,7 +45,7 @@ export function ModeSelectionPage() {
             <Card
               interactive
               variant="pixel"
-              className="flex h-full flex-col gap-5 !p-6 group-focus-visible:ring-2 group-focus-visible:ring-brand group-focus-visible:ring-offset-4"
+              className="light-card flex h-full flex-col gap-5 !p-6 group-focus-visible:ring-2 group-focus-visible:ring-brand group-focus-visible:ring-offset-4"
             >
               <span className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-ink bg-canvas text-brand shadow-[var(--shadow-pixel-sm)]">
                 <Icon size={24} />

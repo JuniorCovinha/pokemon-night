@@ -58,7 +58,7 @@ src/
 
 5. **`TournamentStatus`** é uma máquina de estados simples:
    `registrando-jogadores → decks-sorteados → chave-gerada → em-andamento
-   → finalizado`. `gerarChaveDoTorneio()` lança erro se chamado fora de
+→ finalizado`. `gerarChaveDoTorneio()` lança erro se chamado fora de
    ordem.
 
 6. **Reducer nunca contém lógica de negócio** — só despacha para os
@@ -74,25 +74,59 @@ src/
 8. Alias de import `@/` aponta para `src/` (configurado em
    `vite.config.ts`, `tsconfig.app.json` e `vitest.config.ts`).
 
+## Estado atual do gerenciador Suíço
+
+Em 31/08/2026 foi concluída a primeira fatia do novo modo Campeonato:
+
+- configuração do evento com nome, formato do TCG, melhor de 1/3, duração,
+  quantidade de rodadas e Top 4 opcional;
+- inscrições flexíveis de 4 a 16 jogadores, incluindo quantidades ímpares;
+- confirmação das inscrições sem reutilizar o bracket eliminatório como rodada Suíça;
+- tipos próprios para configuração, entradas e registros de deck;
+- estado `inscricoes-confirmadas`, preparado para a geração da primeira rodada;
+- primeira rodada Suíça com mesas numeradas, sorteio testável e bye confirmado sem
+  adversário fictício;
+- estado `rodada-suica-pareada` e painel visual dos confrontos;
+- início da rodada e registro visual de cada jogo por vitória ou empate, sem campos
+  numéricos de placar;
+- correção de resultados antes do encerramento, com incremento de revisão;
+- transição automática para revisão quando todas as mesas forem confirmadas;
+- encerramento bloqueado até a confirmação completa dos resultados.
+
+Próxima etapa: calcular e exibir a classificação por pontos a partir dos resultados
+confirmados, incluindo o bye e os primeiros critérios de desempate.
+
+Depois de concluir todo o fluxo das rodadas Suíças — resultados, classificação,
+rodadas seguintes e correções — implementar um menu lateral responsivo. A primeira
+versão será informativa, explicando os modos Campeonato e Sorteio de decks, o sistema
+Suíço e todas as opções configuráveis. No desktop será uma barra recolhível; no celular,
+um painel deslizante. O conteúdo deverá vir de uma fonte central para não duplicar
+explicações entre telas.
+
 ## Testes
 
-21 testes com Vitest, cobrindo:
+86 testes com Vitest, cobrindo:
+
 - `services/deckAssignmentService.test.ts` — sorteio de decks
 - `services/bracketService.test.ts` — geração de chave e propagação de
   vencedor (inclusive imutabilidade)
+- `services/swissPairingService.test.ts` — primeira rodada e bye
+- `services/roundService.test.ts` — criação e transição da rodada Suíça
+- `services/matchResultService.test.ts` — resultados por jogo, empates, correções e
+  validações dos formatos melhor de 1 e melhor de 3
 - `contexts/tournamentReducer.test.ts` — fluxo completo do reducer
 
 Rodar com `npm run test`.
 
 ## Comandos
 
-| Comando | O que faz |
-|---|---|
-| `npm run dev` | servidor local com hot-reload |
-| `npm run build` | build de produção (`tsc -b && vite build`) |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier (escreve) |
-| `npm run test` | Vitest |
+| Comando          | O que faz                                  |
+| ---------------- | ------------------------------------------ |
+| `npm run dev`    | servidor local com hot-reload              |
+| `npm run build`  | build de produção (`tsc -b && vite build`) |
+| `npm run lint`   | ESLint                                     |
+| `npm run format` | Prettier (escreve)                         |
+| `npm run test`   | Vitest                                     |
 
 ## O que falta (roadmap combinado com o usuário)
 
@@ -107,6 +141,7 @@ animação, destacar jogador, animar entrada dos confrontos, avançar
 vencedor automaticamente na chave, comemoração ao surgir o campeão.
 
 **Depois (v2 em diante, conforme roadmap original do usuário):**
+
 - v2: fotos dos decks, página individual de cada deck
 - v3: histórico de campeonatos
 - v4: ranking entre amigos, estatísticas, decks mais vencedores

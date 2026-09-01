@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { BASE_BACKGROUND_IMAGE, getBackgroundAssets } from '@/constants/backgroundThemes';
 import { getTypeColor } from '@/constants/pokemonTypes';
 import type { ChampionRevealPhase } from '@/hooks/useChampionReveal';
+import { TownAmbientLayer } from './TownAmbientLayer';
 
 type ChampionBackdropProps = {
   /** Tipo principal do deck do campeão — undefined enquanto não há campeão. */
@@ -11,8 +12,8 @@ type ChampionBackdropProps = {
 };
 
 /**
- * Três estados visuais: "idle" (cidade calma, fundo padrão), "transitioning"
- * (vídeo de transformação do tipo vencedor tocando uma vez, sem loop) e
+ * Três estados visuais: "idle" (cidade padrão com movimento ambiental),
+ * "transitioning" (vídeo do tipo vencedor tocando uma vez, sem loop) e
  * "revealed" (fundo final daquele tipo, parado).
  *
  * Se o tipo vencedor não tiver asset mapeado (tipo novo, futuro), cai de
@@ -34,6 +35,7 @@ export function ChampionBackdrop({ deckType, phase, onTransitionEnded }: Champio
   const mostrarVideo = phase === 'transitioning' && Boolean(assets);
   const imagemAtual =
     phase === 'revealed' && assets ? assets.finalImage : BASE_BACKGROUND_IMAGE;
+  const mostrarAmbienteNeutro = !mostrarVideo && imagemAtual === BASE_BACKGROUND_IMAGE;
 
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden bg-canvas" aria-hidden="true">
@@ -56,6 +58,8 @@ export function ChampionBackdrop({ deckType, phase, onTransitionEnded }: Champio
           className="animate-backdrop-fade h-full w-full object-cover"
         />
       )}
+
+      {mostrarAmbienteNeutro && <TownAmbientLayer />}
 
       {/* Tinta leve na cor do tipo, só quando não há asset dedicado. */}
       {semAssetParaOTipo && deckType && (

@@ -5,3 +5,5 @@ export * from './round';
 export * from './bracket';
 export * from './champion';
 export * from './tournament';
+export * from './tournamentConfig';
+export * from './tournamentSwiss';

@@ -1,0 +1,282 @@
+/* Efeitos locais inspirados no React Bits, ajustados para a identidade pixel art. */
+
+@property --rb-star-border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.rb-pixel-reveal {
+  position: relative;
+  isolation: isolate;
+}
+
+.rb-pixel-reveal__cover {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-rows: repeat(8, minmax(0, 1fr));
+  overflow: hidden;
+  border: 2px solid var(--color-ink);
+  border-radius: 1rem;
+  pointer-events: none;
+}
+
+.rb-pixel-reveal__pixel {
+  background: var(--color-surface-alt);
+  box-shadow: inset -1px -1px 0 color-mix(in srgb, var(--color-ink) 18%, transparent);
+  transform-origin: center;
+}
+
+.rb-pixel-reveal__pixel:nth-child(3n) {
+  background: color-mix(in srgb, var(--color-surface-alt) 84%, var(--color-brand));
+}
+
+.rb-pixel-reveal[data-revealed='true'] .rb-pixel-reveal__pixel {
+  animation: rbPixelSwapOut 240ms steps(4, end) forwards;
+  animation-delay: calc(var(--pixel-order) * 2.5ms);
+}
+
+.rb-click-spark {
+  position: relative;
+  width: 100%;
+}
+
+.rb-click-spark__burst {
+  position: absolute;
+  top: var(--spark-y);
+  left: var(--spark-x);
+  z-index: 4;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.rb-click-spark__ray {
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 3px;
+  height: 9px;
+  background: var(--spark-color);
+  box-shadow: 1px 1px 0 color-mix(in srgb, var(--color-ink) 35%, transparent);
+  transform: rotate(var(--spark-angle)) translateY(-5px) scaleY(0);
+  transform-origin: 50% 100%;
+  animation: rbClickSpark 300ms steps(5, end) both;
+}
+
+.rb-glare-hover {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.rb-glare-hover::after {
+  content: '';
+  position: absolute;
+  inset: -65%;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.08) 44%,
+    rgba(255, 246, 183, 0.48) 50%,
+    rgba(180, 230, 255, 0.2) 55%,
+    transparent 62%
+  );
+  opacity: 0;
+  transform: translate3d(-30%, -18%, 0);
+}
+
+.rb-star-border {
+  position: relative;
+  isolation: isolate;
+}
+
+.rb-star-border__track {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  box-sizing: border-box;
+  padding: 2px;
+  clip-path: polygon(
+    0 8px,
+    8px 8px,
+    8px 0,
+    calc(100% - 8px) 0,
+    calc(100% - 8px) 8px,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    8px calc(100% - 8px),
+    0 calc(100% - 8px)
+  );
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--rb-star-border-angle),
+    transparent 0deg 80deg,
+    color-mix(in srgb, var(--star-border-color) 75%, white) 96deg,
+    var(--star-border-color) 108deg,
+    transparent 126deg 250deg,
+    color-mix(in srgb, var(--star-border-color) 65%, white) 270deg,
+    transparent 290deg 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: rbStarBorder 8s linear infinite;
+}
+
+.rb-pixel-card {
+  position: relative;
+  height: 100%;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.rb-pixel-card__field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.rb-pixel-card__pixel {
+  position: absolute;
+  top: var(--pixel-top);
+  left: var(--pixel-left);
+  width: 6px;
+  height: 6px;
+  background: color-mix(in srgb, var(--color-brand) 46%, var(--color-champion));
+  opacity: 0.14;
+}
+
+.rb-pixel-card__pixel:nth-child(3n) {
+  width: 4px;
+  height: 4px;
+  background: var(--color-ink);
+}
+
+.rb-pixel-card__content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+}
+
+@keyframes rbPixelSwapOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(0.55) rotate(45deg);
+  }
+  100% {
+    visibility: hidden;
+    opacity: 0;
+    transform: scale(0) rotate(90deg);
+  }
+}
+
+@keyframes rbClickSpark {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--spark-angle)) translateY(-5px) scaleY(0);
+  }
+  22% {
+    opacity: 1;
+    transform: rotate(var(--spark-angle)) translateY(-8px) scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--spark-angle)) translateY(-22px) scaleY(0.3);
+  }
+}
+
+@keyframes rbGlareSweep {
+  from {
+    opacity: 0;
+    transform: translate3d(-30%, -18%, 0);
+  }
+  24% {
+    opacity: 0.75;
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(30%, 18%, 0);
+  }
+}
+
+@keyframes rbStarBorder {
+  to {
+    --rb-star-border-angle: 360deg;
+  }
+}
+
+@keyframes rbPixelCardAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(45deg);
+  }
+  70% {
+    opacity: 0.35;
+    transform: scale(1.25) rotate(0deg);
+  }
+  100% {
+    opacity: 0.24;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rb-glare-hover:hover::after {
+    animation: rbGlareSweep 650ms ease-out both;
+  }
+
+  .rb-pixel-card__pixel {
+    opacity: 0;
+    transform: scale(0);
+  }
+
+  .mode-option-link:hover .rb-pixel-card__pixel,
+  .mode-option-link:focus-visible .rb-pixel-card__pixel {
+    animation: rbPixelCardAppear 360ms steps(5, end) forwards;
+    animation-delay: var(--pixel-delay);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rb-pixel-reveal[data-revealed='true'] .rb-pixel-reveal__cover {
+    display: none;
+  }
+
+  .rb-pixel-reveal__pixel,
+  .rb-click-spark__ray,
+  .rb-glare-hover::after,
+  .rb-star-border__track,
+  .rb-pixel-card__pixel {
+    animation: none !important;
+  }
+
+  .rb-click-spark__burst,
+  .rb-glare-hover::after {
+    display: none;
+  }
+
+  .rb-pixel-card__pixel {
+    opacity: 0.14;
+    transform: none;
+  }
+}

@@ -1,16 +1,16 @@
 import { ArrowLeft, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ChampionBackdrop,
   ChampionCard,
+  BrandTitle,
   ChampionshipRegistration,
+  NeutralBackdrop,
   PlayerCard,
   TournamentBracket,
   TournamentSetupSummary,
   SwissRoundPanel,
 } from '@/components';
 import { Button } from '@/components/ui';
-import { useChampionReveal } from '@/hooks/useChampionReveal';
 import { useTournament } from '@/hooks/useTournament';
 
 export function ChampionshipPage() {
@@ -28,7 +28,6 @@ export function ChampionshipPage() {
     desfazerVencedor,
     reiniciar,
   } = useTournament();
-  const { phase, handleTransitionEnded } = useChampionReveal(tournament.championId);
   const registrationOpen = tournament.status === 'registrando-jogadores';
   const swissSetupReady =
     tournament.status === 'inscricoes-confirmadas' && Boolean(tournament.config);
@@ -46,18 +45,14 @@ export function ChampionshipPage() {
 
   return (
     <main className="championship-mode mx-auto flex min-h-screen max-w-5xl flex-col gap-12 px-6 py-16 sm:px-8">
-      <ChampionBackdrop
-        deckType={champion?.deck.tipoPrincipal}
-        phase={phase}
-        onTransitionEnded={handleTransitionEnded}
-      />
+      <NeutralBackdrop />
 
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="font-display text-[9px] uppercase tracking-widest text-brand">
             Modo campeonato
           </p>
-          <h1 className="mt-2 font-display text-3xl font-bold text-ink">Pokémon Night</h1>
+          <BrandTitle className="mt-2 text-3xl" />
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -80,7 +75,7 @@ export function ChampionshipPage() {
         </p>
       )}
 
-      {phase === 'revealed' && champion && <ChampionCard champion={champion} />}
+      {champion && <ChampionCard champion={champion} />}
 
       {registrationOpen ? (
         <ChampionshipRegistration onConfirm={configurarCampeonatoSuico} />

@@ -76,8 +76,101 @@ describe('integração com a TCGdex', () => {
 
     expect(result.source).toBe('tcgdex');
     expect(result.cards).toEqual([
-      expect.objectContaining({ id: sharpedo.id, source: 'tcgdex' }),
+      expect.objectContaining({
+        id: sharpedo.id,
+        source: 'tcgdex',
+        tcgdexLocale: 'pt-br',
+      }),
     ]);
+  });
+
+  it('busca Dragapult em inglês quando o catálogo pt-br está vazio e usa o mesmo idioma nos detalhes', async () => {
+    const dragapult = {
+      id: 'sv08-130',
+      localId: '130',
+      name: 'Dragapult ex',
+      image: 'https://assets.tcgdex.net/en/sv/sv08/130',
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([dragapult]),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            ...dragapult,
+            category: 'Pokemon',
+            dexId: [887],
+            types: ['Dragon'],
+          }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const search = await buscarCartas('Dragapult');
+
+    expect(search).toMatchObject({
+      source: 'tcgdex',
+      cards: [
+        expect.objectContaining({
+          id: dragapult.id,
+          source: 'tcgdex',
+          tcgdexLocale: 'en',
+        }),
+      ],
+    });
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/v2/pt-br/cards?');
+    expect(String(fetchMock.mock.calls[1][0])).toContain('/v2/en/cards?');
+
+    const detail = await obterCartaDoCatalogo(search.cards[0]);
+
+    expect(detail.types).toEqual(['Dragon']);
+    expect(detail.tcgdexLocale).toBe('en');
+    expect(String(fetchMock.mock.calls[2][0])).toContain('/v2/en/cards/sv08-130');
+  });
+
+  it('usa a PokéAPI quando os catálogos pt-br e en retornam vazios', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            results: [
+              {
+                name: 'dragapult',
+                url: 'https://pokeapi.co/api/v2/pokemon/887/',
+              },
+            ],
+          }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await buscarCartas('Dragapult');
+
+    expect(result.source).toBe('pokeapi');
+    expect(result.cards).toEqual([
+      expect.objectContaining({
+        id: 'pokeapi-887',
+        name: 'Dragapult',
+        source: 'pokeapi',
+      }),
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it('adiciona o GIF da PokéAPI ao carregar uma carta com dexId', async () => {
@@ -89,7 +182,11 @@ describe('integração com a TCGdex', () => {
       }),
     );
 
-    const card = await obterCartaDoCatalogo({ ...sharpedo, source: 'tcgdex' });
+    const card = await obterCartaDoCatalogo({
+      ...sharpedo,
+      source: 'tcgdex',
+      tcgdexLocale: 'pt-br',
+    });
     const deck = criarDeckDaCartaTcgDex(card);
 
     expect(deck.imagemAnimada).toBe(
@@ -105,6 +202,7 @@ describe('integração com a TCGdex', () => {
       'fetch',
       vi
         .fn()
+        .mockRejectedValueOnce(new TypeError('Failed to fetch'))
         .mockRejectedValueOnce(new TypeError('Failed to fetch'))
         .mockResolvedValueOnce({
           ok: true,
@@ -139,11 +237,45 @@ describe('integração com a TCGdex', () => {
     ]);
   });
 
+  it('mantém o cache de falha quando os dois catálogos da TCGdex estão indisponíveis', async () => {
+    const storedValues = new Map<string, string>();
+    vi.stubGlobal('sessionStorage', {
+      getItem: vi.fn((key: string) => storedValues.get(key) ?? null),
+      setItem: vi.fn((key: string, value: string) => storedValues.set(key, value)),
+      removeItem: vi.fn((key: string) => storedValues.delete(key)),
+    });
+    const pokeApiResponse = {
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [{ name: 'lucario', url: 'https://pokeapi.co/api/v2/pokemon/448/' }],
+        }),
+    };
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce(pokeApiResponse)
+      .mockResolvedValueOnce(pokeApiResponse);
+    vi.stubGlobal('fetch', fetchMock);
+
+    await buscarCartas('lucario');
+    await buscarCartas('lucario');
+
+    expect(storedValues.has('pokemon-night:tcgdex-retry-after')).toBe(true);
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/v2/pt-br/cards?');
+    expect(String(fetchMock.mock.calls[1][0])).toContain('/v2/en/cards?');
+    expect(String(fetchMock.mock.calls[2][0])).toContain('/api/v2/pokemon?');
+    expect(String(fetchMock.mock.calls[3][0])).toContain('/api/v2/pokemon?');
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
   it('carrega detalhes da PokéAPI e cria um deck com a origem correta', async () => {
     vi.stubGlobal(
       'fetch',
       vi
         .fn()
+        .mockRejectedValueOnce(new TypeError('Failed to fetch'))
         .mockRejectedValueOnce(new TypeError('Failed to fetch'))
         .mockResolvedValueOnce({
           ok: true,
@@ -220,7 +352,7 @@ describe('integração com a TCGdex', () => {
     const card = await obterCartaDoCatalogo(search.cards[0]);
 
     expect(card.types).toEqual(['Fighting']);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it('não ativa o fallback quando a busca foi cancelada', async () => {

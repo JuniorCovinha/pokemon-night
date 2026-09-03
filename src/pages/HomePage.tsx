@@ -1,20 +1,24 @@
+import { useEffect, useRef } from 'react';
 import { ArrowLeft, Shuffle, Swords, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTournament } from '@/hooks/useTournament';
-import { useChampionReveal } from '@/hooks/useChampionReveal';
 import {
   PlayerCard,
+  BrandTitle,
   DeckGrid,
   TournamentBracket,
   ChampionCard,
-  ChampionBackdrop,
+  NeutralBackdrop,
   DeckSelection,
 } from '@/components';
 import { Button } from '@/components/ui';
 import { MAX_DRAW_DECKS } from '@/constants/tournament';
+import { bracketWasJustCreated, focusAndScrollToBracket } from '@/hooks/bracketScroll';
 
 export function HomePage() {
   const navigate = useNavigate();
+  const championAnnouncementRef = useRef<HTMLElement>(null);
+  const bracketSectionRef = useRef<HTMLElement>(null);
   const {
     tournament,
     champion,
@@ -27,14 +31,44 @@ export function HomePage() {
     renomearJogador,
     reiniciar,
   } = useTournament();
-
-  const { phase, handleTransitionEnded } = useChampionReveal(tournament.championId);
+  const previousChampionId = useRef(tournament.championId);
+  const previouslyHadBracket = useRef(Boolean(tournament.bracket));
 
   const decksJaSorteados = tournament.status !== 'registrando-jogadores';
   const chaveGerada = Boolean(tournament.bracket);
   const quantidadeDeDecksCorreta =
     tournament.decks.length >= tournament.players.length &&
     tournament.decks.length <= MAX_DRAW_DECKS;
+
+  useEffect(() => {
+    const championId = tournament.championId;
+    const championWasJustDecided =
+      Boolean(championId) && championId !== previousChampionId.current;
+
+    previousChampionId.current = championId;
+    if (!championWasJustDecided) return;
+
+    championAnnouncementRef.current?.focus({ preventScroll: true });
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+  }, [tournament.championId]);
+
+  useEffect(() => {
+    const hasBracket = Boolean(tournament.bracket);
+    const bracketHasJustBeenCreated = bracketWasJustCreated(
+      previouslyHadBracket.current,
+      hasBracket,
+    );
+
+    previouslyHadBracket.current = hasBracket;
+    if (!bracketHasJustBeenCreated) return;
+
+    const bracketSection = bracketSectionRef.current;
+    if (!bracketSection) return;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    focusAndScrollToBracket(bracketSection, reduceMotion);
+  }, [tournament.bracket]);
 
   function deckDoJogador(playerId: string) {
     const assignment = tournament.assignments.find((a) => a.playerId === playerId);
@@ -47,18 +81,14 @@ export function HomePage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-10 px-6 py-14">
-      <ChampionBackdrop
-        deckType={champion?.deck.tipoPrincipal}
-        phase={phase}
-        onTransitionEnded={handleTransitionEnded}
-      />
+      <NeutralBackdrop />
 
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="font-display text-[9px] uppercase tracking-widest text-brand">
             Modo sorteio de decks
           </p>
-          <h1 className="mt-2 font-display text-2xl font-bold text-ink">Pokémon Night</h1>
+          <BrandTitle className="mt-2 text-2xl" />
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
@@ -76,7 +106,15 @@ export function HomePage() {
         <p className="rounded-xl bg-brand-soft px-4 py-2.5 text-sm text-brand">{error}</p>
       )}
 
-      {phase === 'revealed' && champion && <ChampionCard champion={champion} />}
+      {champion && (
+        <section
+          ref={championAnnouncementRef}
+          tabIndex={-1}
+          aria-label={`Campeão da noite: ${champion.player.name}`}
+        >
+          <ChampionCard champion={champion} />
+        </section>
+      )}
 
       {tournament.status === 'registrando-jogadores' && (
         <DeckSelection
@@ -133,12 +171,20 @@ export function HomePage() {
             </Button>
           </div>
 
-          <DeckGrid decks={tournament.decks.filter((deck) => deckAtribuido(deck.id))} />
+          <DeckGrid
+            decks={tournament.decks.filter((deck) => deckAtribuido(deck.id))}
+            revealed={decksJaSorteados}
+          />
         </section>
       )}
 
       {chaveGerada && tournament.bracket && (
-        <section className="flex flex-col gap-4">
+        <section
+          ref={bracketSectionRef}
+          tabIndex={-1}
+          aria-label="Chave dos confrontos sorteados"
+          className="scroll-mt-6 flex flex-col gap-4 outline-none focus-visible:ring-2 focus-visible:ring-champion focus-visible:ring-offset-4"
+        >
           <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-ink-soft">
             Campeonato
           </h2>

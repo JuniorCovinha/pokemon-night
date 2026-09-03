@@ -7,6 +7,20 @@ type BackgroundAssets = {
 
 export const BASE_BACKGROUND_IMAGE = '/backgrounds/base-town.webp';
 
+const CHAMPION_CARD_BACKGROUND_VIDEOS: Partial<Record<string, string>> = {
+  Fogo: '/backgrounds/fogo-campeao-loop.mp4',
+  Água: '/backgrounds/agua-campeao-loop.mp4',
+  Elétrico: '/backgrounds/eletrico-campeao-loop.mp4',
+  Grama: '/backgrounds/grama-campeao-loop.mp4',
+  Psíquico: '/backgrounds/psiquico-campeao-loop.mp4',
+};
+
+export function getChampionCardBackgroundVideo(
+  tipoPrincipal?: string,
+): string | undefined {
+  return tipoPrincipal ? CHAMPION_CARD_BACKGROUND_VIDEOS[tipoPrincipal] : undefined;
+}
+
 /**
  * Nem todo tipo precisa de um tema próprio — "Água" e "Metálico" usam o
  * mesmo conjunto visual ("gelo") até existirem assets dedicados para
@@ -48,7 +62,9 @@ const THEME_ASSETS: Record<BackgroundTheme, BackgroundAssets> = {
  * (ex: um deck de tipo novo, sem asset ainda) e quem consome precisa
  * tratar esse caso com um fallback, não deixar quebrar.
  */
-export function getBackgroundAssets(tipoPrincipal?: string): BackgroundAssets | undefined {
+export function getBackgroundAssets(
+  tipoPrincipal?: string,
+): BackgroundAssets | undefined {
   const theme = tipoPrincipal ? TYPE_TO_THEME[tipoPrincipal] : undefined;
   return theme ? THEME_ASSETS[theme] : undefined;
 }

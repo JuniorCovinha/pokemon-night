@@ -1,5 +1,6 @@
 import { getTypeColor } from '@/constants/pokemonTypes';
 import { Card, Badge } from '@/components/ui';
+import { GlareHover, PixelReveal } from './effects';
 import { DeckPokemonImage } from './DeckPokemonImage';
 import { hasDeckPokemonImage } from './deckMedia';
 import type { Deck } from '@/types';
@@ -10,8 +11,6 @@ type DeckCardProps = {
   compact?: boolean;
   /** Ativa a animação de entrada, usada no momento do sorteio. */
   revealed?: boolean;
-  /** Ativa o "efeito de captura" (flash + squeeze) no instante do sorteio. */
-  justCaptured?: boolean;
 };
 
 const DIFFICULTY_VARIANT: Record<
@@ -23,12 +22,7 @@ const DIFFICULTY_VARIANT: Record<
   Difícil: 'danger',
 };
 
-export function DeckCard({
-  deck,
-  compact = false,
-  revealed = true,
-  justCaptured = false,
-}: DeckCardProps) {
+export function DeckCard({ deck, compact = false, revealed = true }: DeckCardProps) {
   const corDoTipo = getTypeColor(deck.tipoPrincipal);
 
   if (compact) {
@@ -37,7 +31,7 @@ export function DeckCard({
         {hasDeckPokemonImage(deck) ? (
           <DeckPokemonImage
             deck={deck}
-            variant="artwork"
+            variant="sprite"
             loading="lazy"
             className="h-10 w-10 shrink-0 rounded-lg bg-surface-alt object-contain"
           />
@@ -63,50 +57,48 @@ export function DeckCard({
   }
 
   return (
-    <Card
-      className={`
-        transition-opacity duration-[var(--duration-slow)]
-        ${revealed ? 'animate-slide-in-card opacity-100' : 'opacity-0'}
-        ${justCaptured ? 'animate-capture' : ''}
-      `}
-    >
-      {hasDeckPokemonImage(deck) && (
-        <DeckPokemonImage
-          deck={deck}
-          variant="animated"
-          loading="lazy"
-          className="mb-4 aspect-[245/337] w-full rounded-xl bg-surface-alt object-contain"
-        />
-      )}
+    <PixelReveal revealed={revealed}>
+      <Card>
+        {hasDeckPokemonImage(deck) && (
+          <GlareHover className="mb-4 aspect-[245/337] rounded-xl bg-surface-alt">
+            <DeckPokemonImage
+              deck={deck}
+              variant="artwork"
+              loading="lazy"
+              className="h-full w-full rounded-xl object-contain"
+            />
+          </GlareHover>
+        )}
 
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h3 className="break-words font-display text-xs leading-relaxed text-ink">
-            {deck.nome}
-          </h3>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="break-words font-display text-xs leading-relaxed text-ink">
+              {deck.nome}
+            </h3>
+            {deck.tipoPrincipal && (
+              <p className="mt-1.5 flex items-center gap-1 font-sans text-xs text-ink-soft">
+                <span style={{ color: corDoTipo }} className="font-semibold">
+                  {deck.tipoPrincipal}
+                </span>
+              </p>
+            )}
+          </div>
+
           {deck.tipoPrincipal && (
-            <p className="mt-1.5 flex items-center gap-1 font-sans text-xs text-ink-soft">
-              <span style={{ color: corDoTipo }} className="font-semibold">
-                {deck.tipoPrincipal}
-              </span>
-            </p>
+            <span
+              className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: corDoTipo }}
+              title={deck.tipoPrincipal}
+            />
           )}
         </div>
 
-        {deck.tipoPrincipal && (
-          <span
-            className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full"
-            style={{ backgroundColor: corDoTipo }}
-            title={deck.tipoPrincipal}
-          />
+        {deck.dificuldade && (
+          <Badge variant={DIFFICULTY_VARIANT[deck.dificuldade]} className="mt-3">
+            {deck.dificuldade}
+          </Badge>
         )}
-      </div>
-
-      {deck.dificuldade && (
-        <Badge variant={DIFFICULTY_VARIANT[deck.dificuldade]} className="mt-3">
-          {deck.dificuldade}
-        </Badge>
-      )}
-    </Card>
+      </Card>
+    </PixelReveal>
   );
 }

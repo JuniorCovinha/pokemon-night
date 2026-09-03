@@ -1,7 +1,7 @@
 import type { Deck } from '@/types';
 import { localDeckCatalog, type LocalDeckCatalogCard } from '@/data/decks';
 
-const TCGDEX_API_URL = 'https://api.tcgdex.net/v2/pt-br';
+const TCGDEX_API_URL = 'https://api.tcgdex.net/v2';
 const POKEAPI_API_URL = 'https://pokeapi.co/api/v2';
 const POKEAPI_LIST_CACHE_KEY = 'pokemon-night:pokeapi-list:v1';
 const POKEAPI_LIST_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
@@ -29,6 +29,7 @@ export type TcgDexCard = TcgDexCardSummary & {
   spriteImage?: string;
   animatedImage?: string;
   source?: CardCatalogSource;
+  tcgdexLocale?: TcgDexLocale;
   set?: {
     id: string;
     name: string;
@@ -36,10 +37,16 @@ export type TcgDexCard = TcgDexCardSummary & {
 };
 
 export type CardCatalogSource = 'tcgdex' | 'pokeapi' | 'local';
+export type TcgDexLocale = 'pt-br' | 'en';
 
-export type CardCatalogItem = TcgDexCardSummary & {
-  source: CardCatalogSource;
-};
+export type CardCatalogItem =
+  | (TcgDexCardSummary & {
+      source: 'tcgdex';
+      tcgdexLocale: TcgDexLocale;
+    })
+  | (TcgDexCardSummary & {
+      source: 'pokeapi' | 'local';
+    });
 
 export type CardCatalogSearchResult = {
   cards: CardCatalogItem[];
@@ -145,15 +152,16 @@ async function getPokeApiJson(url: URL, signal?: AbortSignal): Promise<unknown> 
   return response.json();
 }
 
-/** Busca apenas cartas Pokémon em português brasileiro. */
+/** Busca apenas cartas Pokémon no catálogo solicitado da TCGdex. */
 export async function buscarCartasTcgDex(
   termo: string,
   signal?: AbortSignal,
+  locale: TcgDexLocale = 'pt-br',
 ): Promise<TcgDexCardSummary[]> {
   const termoTratado = termo.trim();
   if (termoTratado.length < 2) return [];
 
-  const url = new URL(`${TCGDEX_API_URL}/cards`);
+  const url = new URL(`${TCGDEX_API_URL}/${locale}/cards`);
   url.searchParams.set('name', termoTratado);
   url.searchParams.set('category', 'Pokemon');
   url.searchParams.set('pagination:page', '1');
@@ -389,7 +397,8 @@ function isAbortError(error: unknown, signal?: AbortSignal): boolean {
 }
 
 /**
- * Consulta a TCGdex, depois a PokéAPI e por fim o catálogo local.
+ * Consulta a TCGdex em português, tenta o catálogo inglês quando necessário,
+ * depois a PokéAPI e por fim o catálogo local.
  * Cancelamentos da busca não ativam o fallback, pois são parte normal do debounce.
  */
 export async function buscarCartas(
@@ -397,15 +406,32 @@ export async function buscarCartas(
   signal?: AbortSignal,
 ): Promise<CardCatalogSearchResult> {
   if (!tcgDexTemporarilyUnavailable()) {
-    try {
-      const cards = await buscarCartasTcgDex(termo, signal);
+    let receivedTcgDexResponse = false;
+
+    for (const locale of ['pt-br', 'en'] satisfies TcgDexLocale[]) {
+      try {
+        const cards = await buscarCartasTcgDex(termo, signal, locale);
+        receivedTcgDexResponse = true;
+
+        if (cards.length === 0) continue;
+
+        clearTcgDexFailure();
+        return {
+          cards: cards.map((card) => ({
+            ...card,
+            source: 'tcgdex' as const,
+            tcgdexLocale: locale,
+          })),
+          source: 'tcgdex',
+        };
+      } catch (error) {
+        if (isAbortError(error, signal)) throw error;
+      }
+    }
+
+    if (receivedTcgDexResponse) {
       clearTcgDexFailure();
-      return {
-        cards: cards.map((card) => ({ ...card, source: 'tcgdex' as const })),
-        source: 'tcgdex',
-      };
-    } catch (error) {
-      if (isAbortError(error, signal)) throw error;
+    } else {
       rememberTcgDexFailure();
     }
   }
@@ -435,8 +461,9 @@ export async function buscarCartas(
 export async function obterCartaTcgDex(
   cardId: string,
   signal?: AbortSignal,
+  locale: TcgDexLocale = 'pt-br',
 ): Promise<TcgDexCard> {
-  const url = new URL(`${TCGDEX_API_URL}/cards/${encodeURIComponent(cardId)}`);
+  const url = new URL(`${TCGDEX_API_URL}/${locale}/cards/${encodeURIComponent(cardId)}`);
   const data = await getJson(url, signal);
 
   if (!isCardSummary(data)) {
@@ -455,6 +482,7 @@ export async function obterCartaTcgDex(
         }
       : {}),
     source: 'tcgdex',
+    tcgdexLocale: locale,
   };
 }
 
@@ -464,7 +492,7 @@ export async function obterCartaDoCatalogo(
   signal?: AbortSignal,
 ): Promise<TcgDexCard> {
   if (card.source === 'tcgdex') {
-    return obterCartaTcgDex(card.id, signal);
+    return obterCartaTcgDex(card.id, signal, card.tcgdexLocale);
   }
 
   if (card.source === 'pokeapi') {

@@ -1,5 +1,7 @@
 import { Trophy } from 'lucide-react';
-import { getTypeColor } from '@/constants/pokemonTypes';
+import { getChampionCardBackgroundVideo } from '@/constants/backgroundThemes';
+import { DEFAULT_TYPE_COLOR, getTypeColor } from '@/constants/pokemonTypes';
+import { StarBorder } from './effects';
 import { DeckPokemonImage } from './DeckPokemonImage';
 import { hasDeckPokemonImage } from './deckMedia';
 import type { Champion } from '@/types';
@@ -9,39 +11,75 @@ type ChampionCardProps = {
 };
 
 export function ChampionCard({ champion }: ChampionCardProps) {
+  const backgroundVideo = getChampionCardBackgroundVideo(champion.deck.tipoPrincipal);
+  const typeColor = getTypeColor(champion.deck.tipoPrincipal);
+  const starBorderColor = typeColor === DEFAULT_TYPE_COLOR ? '#ffcb05' : typeColor;
+
   return (
-    <div className="light-card pixel-corners animate-slide-in-card animate-champion-glow relative bg-champion-soft p-8 text-center shadow-[var(--shadow-pixel-champion)]">
-      <PixelBurst />
+    <StarBorder color={starBorderColor}>
+      <div
+        className={`light-card pixel-corners animate-slide-in-card relative overflow-hidden p-8 text-center shadow-[var(--shadow-pixel-champion)] ${
+          backgroundVideo ? 'bg-ink' : 'bg-champion-soft'
+        }`}
+      >
+        {backgroundVideo && (
+          <>
+            <video
+              src={backgroundVideo}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-black/25" />
+          </>
+        )}
 
-      <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full border-2 border-champion bg-white text-champion">
-        <Trophy size={24} />
+        <div className="relative z-10">
+          <PixelBurst />
+
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full border-2 border-champion bg-white text-champion">
+            <Trophy size={24} />
+          </div>
+
+          <p
+            className={`font-display text-[10px] uppercase tracking-wide ${
+              backgroundVideo ? '!text-white drop-shadow-md' : 'text-ink-soft'
+            }`}
+          >
+            Campeão da noite
+          </p>
+
+          {hasDeckPokemonImage(champion.deck) && (
+            <DeckPokemonImage
+              deck={champion.deck}
+              variant="animated"
+              alt={`Pokémon principal do deck campeão ${champion.deck.nome}`}
+              className="mx-auto mt-5 max-h-72 w-full max-w-sm object-contain drop-shadow-[0_12px_12px_rgba(28,26,23,0.45)] sm:max-h-80"
+            />
+          )}
+
+          <h2
+            className={`mt-2 break-words font-display text-lg sm:text-xl ${
+              backgroundVideo ? '!text-white drop-shadow-md' : 'text-ink'
+            }`}
+          >
+            {champion.player.name}
+          </h2>
+
+          <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 font-sans text-sm text-ink-soft">
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ backgroundColor: getTypeColor(champion.deck.tipoPrincipal) }}
+            />
+            {champion.deck.nome}
+          </div>
+        </div>
       </div>
-
-      <p className="font-display text-[10px] uppercase tracking-wide text-ink-soft">
-        Campeão da noite
-      </p>
-
-      {hasDeckPokemonImage(champion.deck) && (
-        <DeckPokemonImage
-          deck={champion.deck}
-          variant="animated"
-          alt={`Pokémon principal do deck campeão ${champion.deck.nome}`}
-          className="mx-auto mt-5 max-h-72 w-full max-w-sm object-contain drop-shadow-[0_12px_12px_rgba(28,26,23,0.22)] sm:max-h-80"
-        />
-      )}
-
-      <h2 className="mt-2 break-words font-display text-lg text-ink sm:text-xl">
-        {champion.player.name}
-      </h2>
-
-      <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 font-sans text-sm text-ink-soft">
-        <span
-          className="h-1.5 w-1.5 rounded-full"
-          style={{ backgroundColor: getTypeColor(champion.deck.tipoPrincipal) }}
-        />
-        {champion.deck.nome}
-      </div>
-    </div>
+    </StarBorder>
   );
 }
 

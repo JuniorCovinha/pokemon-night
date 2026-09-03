@@ -31,7 +31,7 @@ export function TournamentBracket({
     return decks.find((d) => d.id === assignment?.deckId);
   }
 
-  function renderMatch(match: Match) {
+  function renderMatch(match: Match, isFinal = false) {
     return (
       <MatchCard
         key={match.id}
@@ -41,6 +41,7 @@ export function TournamentBracket({
         onSelectWinner={(playerId) => onSelectWinner(match.id, playerId)}
         podeDesfazer={podeDesfazer}
         onUndoWinner={() => onUndoWinner(match.id)}
+        isFinal={isFinal}
       />
     );
   }
@@ -52,7 +53,7 @@ export function TournamentBracket({
           {round.name}
         </h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {round.matches.map(renderMatch)}
+          {round.matches.map((match) => renderMatch(match))}
         </div>
       </div>
     );
@@ -60,11 +61,27 @@ export function TournamentBracket({
 
   const rondaFinal = bracket.rounds.at(-1);
   const rondaSemifinal = bracket.rounds.length >= 2 ? bracket.rounds.at(-2) : undefined;
-  const rondasAnteriores = bracket.rounds.slice(0, Math.max(bracket.rounds.length - 2, 0));
+  const rondasAnteriores = bracket.rounds.slice(
+    0,
+    Math.max(bracket.rounds.length - 2, 0),
+  );
 
   // Caso simples (ex: só 1 rodada, com 2 jogadores): sem o que convergir.
   if (!rondaSemifinal || !rondaFinal) {
-    return <div className="flex flex-col gap-6">{bracket.rounds.map(renderRound)}</div>;
+    return (
+      <div className="flex flex-col gap-6">
+        {bracket.rounds.map((round) => (
+          <div key={round.index} className="flex flex-col gap-3">
+            <h3 className="font-display text-[10px] uppercase tracking-wide text-ink-soft">
+              {round.name}
+            </h3>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {round.matches.map((match) => renderMatch(match, true))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
 
   const metade = Math.ceil(rondaSemifinal.matches.length / 2);
@@ -86,21 +103,21 @@ export function TournamentBracket({
           <h3 className="font-display text-[10px] uppercase tracking-wide text-ink-soft">
             {rondaSemifinal.name}
           </h3>
-          {confrontosEsquerda.map(renderMatch)}
+          {confrontosEsquerda.map((match) => renderMatch(match))}
         </div>
 
         <div className="flex flex-col gap-3 md:w-56">
           <h3 className="text-center font-display text-[10px] uppercase tracking-wide text-ink-soft">
             {rondaFinal.name}
           </h3>
-          {rondaFinal.matches.map(renderMatch)}
+          {rondaFinal.matches.map((match) => renderMatch(match, true))}
         </div>
 
         <div className="flex flex-col gap-3">
           <h3 className="font-display text-[10px] uppercase tracking-wide text-ink-soft md:text-right">
             {rondaSemifinal.name}
           </h3>
-          {confrontosDireita.map(renderMatch)}
+          {confrontosDireita.map((match) => renderMatch(match))}
         </div>
       </div>
     </div>

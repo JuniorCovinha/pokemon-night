@@ -74,11 +74,36 @@ src/
 8. Alias de import `@/` aponta para `src/` (configurado em
    `vite.config.ts`, `tsconfig.app.json` e `vitest.config.ts`).
 
-9. **Mídia da PokéAPI:** a busca e a escolha de decks exibem artwork estática. O
-   `dexId` da TCGdex ou o retorno da PokéAPI podem preencher `imagemSprite` e
-   `imagemAnimada`. Imagens pequenas, como inscrições e chaves, usam sprites; GIFs do
-   Pokémon Showdown ficam restritos aos decks sorteados e ao campeão. O componente
-   `DeckPokemonImage` centraliza essas variantes e seus fallbacks.
+9. **Mídia da PokéAPI:** a busca e os decks sorteados exibem artwork estática. Depois
+   da escolha, o card compacto do deck usa a sprite, assim como inscrições e chaves.
+   O `dexId` da TCGdex ou o retorno da PokéAPI podem preencher `imagemSprite` e
+   `imagemAnimada`; GIFs do Pokémon Showdown ficam restritos ao `ChampionCard`. O
+   componente `DeckPokemonImage` centraliza essas variantes e seus fallbacks.
+
+10. **Fundo do campeão:** a cidade permanece neutra durante toda a aplicação. Vídeos
+    temáticos em loop são aplicados somente dentro do `ChampionCard`, atrás do Pokémon.
+    Os primeiros assets são `public/backgrounds/fogo-campeao-loop.mp4`,
+    `public/backgrounds/agua-campeao-loop.mp4`,
+    `public/backgrounds/eletrico-campeao-loop.mp4`,
+    `public/backgrounds/grama-campeao-loop.mp4` e
+    `public/backgrounds/psiquico-campeao-loop.mp4`, usados respectivamente por
+    campeões dos tipos Fogo, Água, Elétrico, Grama e Psíquico; outros tipos mantêm o
+    fundo claro até receberem seus próprios vídeos.
+
+11. **Efeitos inspirados no React Bits:** cinco efeitos locais em
+    `src/components/effects` preservam a identidade pixel art sem novas dependências.
+    A revelação dos decks sorteados usa Pixel Swap uma única vez; o clique válido de
+    vencedor usa Click Spark vermelho nas rodadas e dourado na final; o Glare Hover
+    fica restrito à artwork estática dos decks revelados (nunca à busca); o Star Border
+    substitui o antigo glow do campeão e usa a cor da tipagem; e os cards do menu
+    recebem pixels decorativos sem ocultar título ou descrição. Todos respeitam
+    `prefers-reduced-motion`, e os efeitos de hover exigem um dispositivo com hover
+    preciso.
+
+12. **Marca e navegação contextual:** todas as aparições visuais de “Pokémon Night”
+    usam o componente `BrandTitle`, com amarelo claro e contorno pixelado escuro. No
+    modo Sorteio, a criação da chave move foco e rolagem para a seção do bracket apenas
+    na transição sem chave → com chave; a revelação do campeão continua levando ao topo.
 
 ## Estado atual do gerenciador Suíço
 
@@ -111,7 +136,7 @@ explicações entre telas.
 
 ## Testes
 
-87 testes com Vitest, cobrindo:
+103 testes com Vitest, cobrindo:
 
 - `services/deckAssignmentService.test.ts` — sorteio de decks
 - `services/bracketService.test.ts` — geração de chave e propagação de
@@ -121,6 +146,14 @@ explicações entre telas.
 - `services/matchResultService.test.ts` — resultados por jogo, empates, correções e
   validações dos formatos melhor de 1 e melhor de 3
 - `contexts/tournamentReducer.test.ts` — fluxo completo do reducer
+- `components/deckMediaUsage.test.tsx` — sprite no deck compacto, artwork nos decks
+  sorteados e GIF reservado ao campeão
+- `components/reactBitsEffects.test.tsx` — estrutura e semântica decorativa dos cinco
+  efeitos visuais inspirados no React Bits
+- `components/ChampionCard.typeBorder.test.tsx` — cor da tipagem e fallback dourado da
+  borda do campeão
+- `components/BrandTitle.test.tsx` — marca visual centralizada e semântica configurável
+- `hooks/bracketScroll.test.ts` — transição, foco e rolagem até a chave
 
 Rodar com `npm run test`.
 

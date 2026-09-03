@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
+@import './styles/reactBitsEffects.css';
 
 /* ============================================================
    DESIGN SYSTEM — Pokémon Night
@@ -71,6 +72,20 @@ h3 {
   letter-spacing: 0.02em;
 }
 
+/* Marca legível sobre a cidade noturna: amarelo claro e contorno duro,
+   alinhado ao desenho de pixels da fonte sem depender de animação contínua. */
+.pokemon-night-brand {
+  color: var(--color-ink-soft);
+  -webkit-text-stroke: 1px var(--color-ink);
+  paint-order: stroke fill;
+  text-shadow:
+    1px 0 0 var(--color-ink),
+    -1px 0 0 var(--color-ink),
+    0 1px 0 var(--color-ink),
+    0 -1px 0 var(--color-ink),
+    2px 2px 0 var(--color-ink);
+}
+
 /* ---------- Utilitário: cantos em degrau (pixel-corners) ----------
    Usado em elementos-âncora do retrô (Modal/Dialog, e opcionalmente
    Card em variante "pixel"). Não aplicado globalmente — em elementos
@@ -106,38 +121,6 @@ h3 {
   }
 }
 
-/* Efeito de captura ao sortear deck: "engole" e solta, como uma
-   Poké Ball fechando sobre o card por um instante. */
-@keyframes captureEffect {
-  0% {
-    transform: scale(1);
-    filter: brightness(1) saturate(1);
-  }
-  35% {
-    transform: scale(0.88) rotate(-1deg);
-    filter: brightness(1.5) saturate(1.4);
-  }
-  60% {
-    transform: scale(1.04) rotate(1deg);
-    filter: brightness(1.1) saturate(1.1);
-  }
-  100% {
-    transform: scale(1) rotate(0deg);
-    filter: brightness(1) saturate(1);
-  }
-}
-
-/* Brilho pulsante quando o campeão é definido */
-@keyframes championGlow {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 203, 5, 0.55);
-  }
-  50% {
-    box-shadow: 0 0 0 10px rgba(255, 203, 5, 0);
-  }
-}
-
 /* Pequenos "pixels" surgindo — usado em bursts pontuais (captura,
    confirmação de vencedor). Aplicar em elementos curtos (::before/::after
    ou spans posicionados absolutamente pelo componente consumidor). */
@@ -165,14 +148,6 @@ h3 {
 
 .animate-slide-in-card {
   animation: slideInCard var(--duration-base) var(--ease-retro) both;
-}
-
-.animate-capture {
-  animation: captureEffect 480ms var(--ease-snap) both;
-}
-
-.animate-champion-glow {
-  animation: championGlow 1.8s var(--ease-snap) infinite;
 }
 
 .animate-pixel-pop {

@@ -13,6 +13,11 @@ const CHAMPION_CARD_BACKGROUND_VIDEOS: Partial<Record<string, string>> = {
   Elétrico: '/backgrounds/eletrico-campeao-loop.mp4',
   Grama: '/backgrounds/grama-campeao-loop.mp4',
   Psíquico: '/backgrounds/psiquico-campeao-loop.mp4',
+  Lutador: '/backgrounds/lutador-campeao-loop.mp4',
+  Sombrio: '/backgrounds/sombrio-campeao-loop.mp4',
+  Metálico: '/backgrounds/metalico-campeao-loop.mp4',
+  Dragão: '/backgrounds/dragao-campeao-loop.mp4',
+  Fada: '/backgrounds/fada-campeao-loop.mp4',
 };
 
 export function getChampionCardBackgroundVideo(

@@ -85,10 +85,15 @@ src/
     Os primeiros assets são `public/backgrounds/fogo-campeao-loop.mp4`,
     `public/backgrounds/agua-campeao-loop.mp4`,
     `public/backgrounds/eletrico-campeao-loop.mp4`,
-    `public/backgrounds/grama-campeao-loop.mp4` e
-    `public/backgrounds/psiquico-campeao-loop.mp4`, usados respectivamente por
-    campeões dos tipos Fogo, Água, Elétrico, Grama e Psíquico; outros tipos mantêm o
-    fundo claro até receberem seus próprios vídeos.
+    `public/backgrounds/grama-campeao-loop.mp4`,
+    `public/backgrounds/psiquico-campeao-loop.mp4`,
+    `public/backgrounds/lutador-campeao-loop.mp4`,
+    `public/backgrounds/sombrio-campeao-loop.mp4`,
+    `public/backgrounds/metalico-campeao-loop.mp4`,
+    `public/backgrounds/dragao-campeao-loop.mp4` e
+    `public/backgrounds/fada-campeao-loop.mp4`, usados respectivamente por campeões
+    dos tipos Fogo, Água, Elétrico, Grama, Psíquico, Lutador, Sombrio, Metálico, Dragão e
+    Fada; outros tipos mantêm o fundo claro até receberem seus próprios vídeos.
 
 11. **Efeitos inspirados no React Bits:** cinco efeitos locais em
     `src/components/effects` preservam a identidade pixel art sem novas dependências.

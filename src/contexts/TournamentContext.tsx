@@ -4,7 +4,7 @@ import {
   TournamentContext,
   type TournamentContextValue,
 } from './tournamentContextDefinition';
-import { criarTorneio, obterCampeao } from '@/services';
+import { calcularClassificacaoSuica, criarTorneio, obterCampeao } from '@/services';
 import { initialPlayers } from '@/data/players';
 import type { Deck, Player } from '@/types';
 
@@ -32,6 +32,7 @@ export function TournamentProvider({
     () => ({
       tournament: state.tournament,
       champion: obterCampeao(state.tournament),
+      standings: calcularClassificacaoSuica(state.tournament),
       error: state.error,
       definirDecks: (decks) => dispatch({ type: 'DEFINIR_DECKS', payload: { decks } }),
       sortearDecks: () => dispatch({ type: 'SORTEAR_DECKS' }),
@@ -44,6 +45,7 @@ export function TournamentProvider({
       configurarCampeonatoSuico: (setup) =>
         dispatch({ type: 'CONFIGURAR_CAMPEONATO_SUICO', payload: setup }),
       gerarPrimeiraRodadaSuica: () => dispatch({ type: 'GERAR_PRIMEIRA_RODADA_SUICA' }),
+      gerarProximaRodadaSuica: () => dispatch({ type: 'GERAR_PROXIMA_RODADA_SUICA' }),
       iniciarRodadaSuica: () => dispatch({ type: 'INICIAR_RODADA_SUICA' }),
       registrarResultadoSuico: (matchId, result) =>
         dispatch({
@@ -51,6 +53,11 @@ export function TournamentProvider({
           payload: { matchId, result },
         }),
       finalizarRodadaSuica: () => dispatch({ type: 'FINALIZAR_RODADA_SUICA' }),
+      reabrirRodadaSuica: (roundNumber, reason) =>
+        dispatch({
+          type: 'REABRIR_RODADA_SUICA',
+          payload: { roundNumber, reason },
+        }),
       registrarVencedor: (matchId, winnerId) =>
         dispatch({ type: 'REGISTRAR_VENCEDOR', payload: { matchId, winnerId } }),
       desfazerVencedor: (matchId) =>

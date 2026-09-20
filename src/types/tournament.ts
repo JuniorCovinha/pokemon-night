@@ -7,6 +7,7 @@ import type {
   TournamentEntry,
 } from './tournamentConfig';
 import type { SwissRound, TournamentMatch } from './tournamentSwiss';
+import type { TournamentAuditEntry } from './tournamentAudit';
 
 /**
  * Vínculo entre um jogador e o deck sorteado para ele.
@@ -30,6 +31,7 @@ export type TournamentStatus =
   | 'rodada-suica-ativa'
   | 'rodada-suica-revisao'
   | 'rodada-suica-concluida'
+  | 'suico-concluido'
   | 'decks-sorteados'
   | 'chave-gerada'
   | 'em-andamento'
@@ -52,6 +54,8 @@ export type Tournament = {
   deckRegistrations: TournamentDeckRegistration[];
   swissRounds: SwissRound[];
   tournamentMatches: TournamentMatch[];
+  /** Ausente em eventos anteriores à introdução do histórico local. */
+  auditLog?: TournamentAuditEntry[];
   bracket?: Bracket;
   championId?: string;
   createdAt: string;

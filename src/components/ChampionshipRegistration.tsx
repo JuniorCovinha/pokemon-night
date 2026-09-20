@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CheckCircle2, Plus, Search, Settings2, Trash2, Users, X } from 'lucide-react';
 import { getTypeColor } from '@/constants/pokemonTypes';
 import { MAX_SWISS_PLAYERS, MIN_SWISS_PLAYERS } from '@/constants/tournament';
@@ -8,6 +8,7 @@ import { Button, Card, Input } from '@/components/ui';
 import { DeckPokemonImage } from './DeckPokemonImage';
 import { hasDeckPokemonImage } from './deckMedia';
 import { PokemonDeckSearch } from './PokemonDeckSearch';
+import { focusDeckSelectionTarget } from '@/hooks/deckSearchNavigation';
 import type { Deck, MatchFormat, TcgFormat, TournamentConfig } from '@/types';
 import type { SwissTournamentSetup } from '@/services';
 
@@ -38,6 +39,39 @@ export function ChampionshipRegistration({ onConfirm }: ChampionshipRegistration
   );
   const [choosingDeckFor, setChoosingDeckFor] = useState<string>();
   const [formError, setFormError] = useState<string | null>(null);
+  const searchSectionRef = useRef<HTMLElement>(null);
+  const playerCardRefs = useRef(new Map<string, HTMLDivElement>());
+  const previousChoosingDeckFor = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    const previousPlayerId = previousChoosingDeckFor.current;
+    previousChoosingDeckFor.current = choosingDeckFor;
+    const target = choosingDeckFor
+      ? searchSectionRef.current
+      : previousPlayerId
+        ? playerCardRefs.current.get(previousPlayerId)
+        : undefined;
+    if (!target) return;
+
+    const focusTarget = choosingDeckFor
+      ? (target.querySelector<HTMLInputElement>('input') ?? target)
+      : target;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    focusDeckSelectionTarget(target, focusTarget, reduceMotion);
+  }, [choosingDeckFor]);
+
+  function openDeckSearch(playerId: string) {
+    setChoosingDeckFor(playerId);
+    // O painel pode já estar aberto, mas fora da área visível após rolagem manual.
+    const target = searchSectionRef.current;
+    if (choosingDeckFor === playerId && target) {
+      focusDeckSelectionTarget(
+        target,
+        target.querySelector<HTMLInputElement>('input') ?? target,
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      );
+    }
+  }
 
   function updateRecommendedRounds(playerCount: number) {
     setConfig((current) => ({
@@ -135,7 +169,12 @@ export function ChampionshipRegistration({ onConfirm }: ChampionshipRegistration
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-8">
-      <section className="flex flex-col gap-4">
+      <section
+        id="championship-settings"
+        tabIndex={-1}
+        data-guide-section
+        className="flex flex-col gap-4"
+      >
         <div>
           <p className="flex items-center gap-2 font-display text-[10px] uppercase tracking-widest text-brand">
             <Settings2 size={14} />
@@ -230,7 +269,12 @@ export function ChampionshipRegistration({ onConfirm }: ChampionshipRegistration
         </Card>
       </section>
 
-      <section className="flex flex-col gap-4">
+      <section
+        id="championship-registrations"
+        tabIndex={-1}
+        data-guide-section
+        className="flex flex-col gap-4"
+      >
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="flex items-center gap-2 font-display text-[10px] uppercase tracking-widest text-brand">
@@ -264,91 +308,125 @@ export function ChampionshipRegistration({ onConfirm }: ChampionshipRegistration
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {drafts.map((draft, index) => (
-            <Card key={draft.id} className="light-card flex flex-col gap-4 !p-5">
-              <div className="flex items-start gap-3">
-                <span className="mt-5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-canvas font-display text-[10px] text-ink">
-                  {index + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <Input
-                    label={`Jogador ${index + 1}`}
-                    value={draft.name}
-                    onChange={(event) => updateName(draft.id, event.target.value)}
-                    placeholder="Nome do jogador"
-                    autoComplete="off"
-                    className="text-ink"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removePlayer(draft.id)}
-                  disabled={drafts.length <= MIN_SWISS_PLAYERS}
-                  className="mt-5 rounded-full p-2 text-ink-soft transition-colors hover:bg-danger-soft hover:text-danger disabled:cursor-not-allowed disabled:opacity-25"
-                  aria-label={`Remover jogador ${index + 1}`}
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
-
-              {draft.deck ? (
-                <div className="flex items-center gap-3 rounded-xl border border-line bg-surface-alt p-2.5">
-                  {hasDeckPokemonImage(draft.deck) ? (
-                    <DeckPokemonImage
-                      deck={draft.deck}
-                      variant="sprite"
-                      alt={draft.deck.nome}
-                      className="h-14 w-14 shrink-0 rounded-lg object-contain"
-                    />
-                  ) : (
-                    <span
-                      className="h-10 w-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: getTypeColor(draft.deck.tipoPrincipal) }}
-                    />
-                  )}
-
+            <div
+              key={draft.id}
+              ref={(node) => {
+                if (node) playerCardRefs.current.set(draft.id, node);
+                else playerCardRefs.current.delete(draft.id);
+              }}
+              tabIndex={-1}
+              aria-label={`Inscrição de ${draft.name.trim() || `jogador ${index + 1}`}`}
+              className="scroll-mt-6 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
+            >
+              <Card className="light-card flex h-full flex-col gap-4 !p-5">
+                <div className="flex items-start gap-3">
+                  <span className="mt-5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-canvas font-display text-[10px] text-ink">
+                    {index + 1}
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-ink">
-                      {draft.deck.nome}
-                    </p>
-                    <p
-                      className="truncate text-xs font-semibold"
-                      style={{ color: getTypeColor(draft.deck.tipoPrincipal) }}
-                    >
-                      {draft.deck.tipoPrincipal ?? 'Tipo não informado'}
-                    </p>
+                    <Input
+                      label={`Jogador ${index + 1}`}
+                      value={draft.name}
+                      onChange={(event) => updateName(draft.id, event.target.value)}
+                      placeholder="Nome do jogador"
+                      autoComplete="off"
+                      className="text-ink"
+                    />
                   </div>
-
                   <button
                     type="button"
-                    onClick={() => setChoosingDeckFor(draft.id)}
-                    className="rounded-full p-2 text-ink-soft transition-colors hover:bg-white hover:text-ink"
-                    aria-label={`Alterar deck de ${draft.name || `jogador ${index + 1}`}`}
+                    onClick={() => removePlayer(draft.id)}
+                    disabled={drafts.length <= MIN_SWISS_PLAYERS}
+                    className="mt-5 rounded-full p-2 text-ink-soft transition-colors hover:bg-danger-soft hover:text-danger disabled:cursor-not-allowed disabled:opacity-25"
+                    aria-label={`Remover jogador ${index + 1}`}
                   >
-                    <Search size={15} />
+                    <Trash2 size={15} />
                   </button>
                 </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setChoosingDeckFor(draft.id)}
-                  className="w-full"
-                >
-                  <Search size={14} />
-                  Escolher deck
-                </Button>
-              )}
-            </Card>
+
+                {draft.deck ? (
+                  <div className="flex items-center gap-3 rounded-xl border border-line bg-surface-alt p-2.5">
+                    {hasDeckPokemonImage(draft.deck) ? (
+                      <DeckPokemonImage
+                        deck={draft.deck}
+                        variant="sprite"
+                        alt={draft.deck.nome}
+                        className="h-14 w-14 shrink-0 rounded-lg object-contain"
+                      />
+                    ) : (
+                      <span
+                        className="h-10 w-2 shrink-0 rounded-full"
+                        style={{
+                          backgroundColor: getTypeColor(draft.deck.tipoPrincipal),
+                        }}
+                      />
+                    )}
+
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-ink">
+                        {draft.deck.nome}
+                      </p>
+                      <p
+                        className="truncate text-xs font-semibold"
+                        style={{ color: getTypeColor(draft.deck.tipoPrincipal) }}
+                      >
+                        {draft.deck.tipoPrincipal ?? 'Tipo não informado'}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => openDeckSearch(draft.id)}
+                      className="rounded-full p-2 text-ink-soft transition-colors hover:bg-white hover:text-ink"
+                      aria-label={`Alterar deck de ${draft.name || `jogador ${index + 1}`}`}
+                      aria-expanded={choosingDeckFor === draft.id}
+                      aria-controls={
+                        choosingDeckFor === draft.id
+                          ? 'championship-deck-search'
+                          : undefined
+                      }
+                    >
+                      <Search size={15} />
+                    </button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => openDeckSearch(draft.id)}
+                    className="w-full"
+                    aria-expanded={choosingDeckFor === draft.id}
+                    aria-controls={
+                      choosingDeckFor === draft.id
+                        ? 'championship-deck-search'
+                        : undefined
+                    }
+                  >
+                    <Search size={14} />
+                    Escolher deck
+                  </Button>
+                )}
+              </Card>
+            </div>
           ))}
         </div>
       </section>
 
       {activeDraft && (
-        <section className="flex flex-col gap-3">
+        <section
+          id="championship-deck-search"
+          ref={searchSectionRef}
+          tabIndex={-1}
+          aria-labelledby="championship-deck-search-title"
+          className="flex scroll-mt-6 flex-col gap-3"
+        >
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h3 className="font-display text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              <h3
+                id="championship-deck-search-title"
+                className="font-display text-xs font-semibold uppercase tracking-wide text-ink-soft"
+              >
                 Deck de {activeDraft.name.trim() || 'jogador sem nome'}
               </h3>
               <p className="mt-1 text-sm text-ink-soft">
@@ -366,7 +444,10 @@ export function ChampionshipRegistration({ onConfirm }: ChampionshipRegistration
             </Button>
           </div>
 
-          <PokemonDeckSearch onSelect={(deck) => setDeck(activeDraft.id, deck)} />
+          <PokemonDeckSearch
+            key={activeDraft.id}
+            onSelect={(deck) => setDeck(activeDraft.id, deck)}
+          />
         </section>
       )}
 

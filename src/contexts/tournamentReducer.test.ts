@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { tournamentReducer, type TournamentState } from './tournamentReducer';
-import { criarConfiguracaoSuicaPadrao, criarTorneio } from '@/services';
+import {
+  criarConfiguracaoSuicaPadrao,
+  criarTorneio,
+  configurarCampeonatoSuico,
+  gerarPrimeiraRodadaSuica,
+  iniciarRodadaSuica,
+  registrarResultadoPartidaSuica,
+  finalizarRodadaSuica,
+} from '@/services';
 import type { Deck, Player } from '@/types';
 
 const players: Player[] = [
@@ -162,6 +170,36 @@ describe('tournamentReducer', () => {
     expect(novoEstado.error).toMatch(/sortear os decks/);
   });
 
+  it('GERAR_PROXIMA_RODADA_SUICA preserva o evento se a rodada ainda estiver ativa', () => {
+    const before = estadoInicial();
+    const after = tournamentReducer(before, { type: 'GERAR_PROXIMA_RODADA_SUICA' });
+    expect(after.tournament).toBe(before.tournament);
+    expect(after.error).toMatch(/Encerre a rodada/);
+  });
+
+  it('GERAR_PROXIMA_RODADA_SUICA acrescenta as mesas e limpa erros anteriores', () => {
+    let tournament = configurarCampeonatoSuico(criarTorneio([], []), {
+      config: criarConfiguracaoSuicaPadrao(4),
+      registrations: players.map((player, index) => ({ player, deck: decks[index] })),
+    });
+    tournament = iniciarRodadaSuica(gerarPrimeiraRodadaSuica(tournament));
+    for (const match of tournament.tournamentMatches)
+      tournament = registrarResultadoPartidaSuica(tournament, match.id, {
+        gameOutcomes: ['player1-win', 'player1-win'],
+      });
+    tournament = finalizarRodadaSuica(tournament);
+    const state = tournamentReducer(
+      { tournament, error: 'Erro anterior' },
+      { type: 'GERAR_PROXIMA_RODADA_SUICA' },
+    );
+    expect(state.error).toBeNull();
+    expect(state.tournament.status).toBe('rodada-suica-pareada');
+    expect(state.tournament.swissRounds).toHaveLength(2);
+    expect(state.tournament.tournamentMatches.slice(0, 2)).toEqual(
+      tournament.tournamentMatches,
+    );
+  });
+
   it('fluxo completo: sortear decks → gerar chave → registrar vencedores → campeão', () => {
     let estado = estadoInicial();
     estado = tournamentReducer(estado, { type: 'SORTEAR_DECKS' });
@@ -199,6 +237,42 @@ describe('tournamentReducer', () => {
 
     expect(estado.tournament.status).toBe('registrando-jogadores');
     expect(estado.tournament.assignments).toHaveLength(0);
+  });
+
+  it('REABRIR_RODADA_SUICA valida justificativa e mantém o estado em caso de erro', () => {
+    const state = estadoInicial();
+    const updated = tournamentReducer(state, {
+      type: 'REABRIR_RODADA_SUICA',
+      payload: { roundNumber: 1, reason: ' ' },
+    });
+    expect(updated.tournament).toBe(state.tournament);
+    expect(updated.error).toMatch(/justificativa/);
+  });
+
+  it('REABRIR_RODADA_SUICA registra o motivo e retorna a rodada para revisão', () => {
+    let tournament = configurarCampeonatoSuico(criarTorneio([], []), {
+      config: criarConfiguracaoSuicaPadrao(4),
+      registrations: players.map((player, index) => ({ player, deck: decks[index] })),
+    });
+    tournament = iniciarRodadaSuica(gerarPrimeiraRodadaSuica(tournament));
+    for (const match of tournament.tournamentMatches)
+      tournament = registrarResultadoPartidaSuica(tournament, match.id, {
+        gameOutcomes: ['player1-win', 'player1-win'],
+      });
+    tournament = finalizarRodadaSuica(tournament);
+    const state = tournamentReducer(
+      { tournament, error: 'Anterior' },
+      {
+        type: 'REABRIR_RODADA_SUICA',
+        payload: { roundNumber: 1, reason: 'Corrigir mesa' },
+      },
+    );
+    expect(state.error).toBeNull();
+    expect(state.tournament.status).toBe('rodada-suica-revisao');
+    expect(state.tournament.auditLog?.at(-1)).toMatchObject({
+      kind: 'round-reopened',
+      reason: 'Corrigir mesa',
+    });
   });
 
   it('uma ação com erro não impede ações válidas em seguida', () => {

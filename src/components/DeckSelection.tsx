@@ -21,7 +21,12 @@ export function DeckSelection({
   }
 
   return (
-    <section className="flex flex-col gap-4">
+    <section
+      id="draw-deck-selection"
+      tabIndex={-1}
+      data-guide-section
+      className="flex flex-col gap-4"
+    >
       <div className="flex items-end justify-between gap-4">
         <div>
           <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-ink-soft">

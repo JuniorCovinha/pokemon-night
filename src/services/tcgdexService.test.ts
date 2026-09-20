@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   buscarCartas,
+  buscarCartasTcgDex,
   criarDeckDaCartaTcgDex,
   normalizarTipoTcgDex,
   obterCartaDoCatalogo,
+  obterCartaTcgDex,
   obterImagemTcgDex,
   type TcgDexCard,
 } from './tcgdexService';
@@ -79,12 +81,56 @@ describe('integração com a TCGdex', () => {
       expect.objectContaining({
         id: sharpedo.id,
         source: 'tcgdex',
-        tcgdexLocale: 'pt-br',
+        tcgdexLocale: 'pt',
       }),
     ]);
   });
 
-  it('busca Dragapult em inglês quando o catálogo pt-br está vazio e usa o mesmo idioma nos detalhes', async () => {
+  it('usa /pt e a categoria localizada na busca e nos detalhes por padrão', async () => {
+    const xerneas = {
+      ...sharpedo,
+      id: 'xy1-97',
+      name: 'Xerneas EX',
+      category: 'Pokémon',
+      types: ['Fada'],
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => [xerneas] })
+      .mockResolvedValueOnce({ ok: true, json: async () => xerneas });
+    vi.stubGlobal('fetch', fetchMock);
+    const search = await buscarCartas('Xerneas');
+    const detail = await obterCartaDoCatalogo(search.cards[0]);
+    const url = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(url.pathname).toBe('/v2/pt/cards');
+    expect(url.searchParams.get('category')).toBe('Pokémon');
+    expect(url.searchParams.get('name')).toBe('Xerneas');
+    expect(String(fetchMock.mock.calls[1][0])).toBe(
+      'https://api.tcgdex.net/v2/pt/cards/xy1-97',
+    );
+    expect(criarDeckDaCartaTcgDex(detail).tipoPrincipal).toBe('Fada');
+  });
+
+  it('usa /pt também nas chamadas diretas e preserva a categoria inglesa no fallback', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => [] })
+      .mockResolvedValueOnce({ ok: true, json: async () => sharpedo })
+      .mockResolvedValueOnce({ ok: true, json: async () => [] });
+    vi.stubGlobal('fetch', fetchMock);
+    await buscarCartasTcgDex('Sharpedo');
+    await obterCartaTcgDex('sample-42');
+    await buscarCartasTcgDex('Sharpedo', undefined, 'en');
+    expect(new URL(String(fetchMock.mock.calls[0][0])).pathname).toBe('/v2/pt/cards');
+    expect(new URL(String(fetchMock.mock.calls[1][0])).pathname).toBe(
+      '/v2/pt/cards/sample-42',
+    );
+    const englishUrl = new URL(String(fetchMock.mock.calls[2][0]));
+    expect(englishUrl.pathname).toBe('/v2/en/cards');
+    expect(englishUrl.searchParams.get('category')).toBe('Pokemon');
+  });
+
+  it('busca Dragapult em inglês quando o catálogo pt está vazio e usa o mesmo idioma nos detalhes', async () => {
     const dragapult = {
       id: 'sv08-130',
       localId: '130',
@@ -125,7 +171,7 @@ describe('integração com a TCGdex', () => {
         }),
       ],
     });
-    expect(String(fetchMock.mock.calls[0][0])).toContain('/v2/pt-br/cards?');
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/v2/pt/cards?');
     expect(String(fetchMock.mock.calls[1][0])).toContain('/v2/en/cards?');
 
     const detail = await obterCartaDoCatalogo(search.cards[0]);
@@ -135,7 +181,7 @@ describe('integração com a TCGdex', () => {
     expect(String(fetchMock.mock.calls[2][0])).toContain('/v2/en/cards/sv08-130');
   });
 
-  it('usa a PokéAPI quando os catálogos pt-br e en retornam vazios', async () => {
+  it('usa a PokéAPI quando os catálogos pt e en retornam vazios', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
@@ -185,7 +231,7 @@ describe('integração com a TCGdex', () => {
     const card = await obterCartaDoCatalogo({
       ...sharpedo,
       source: 'tcgdex',
-      tcgdexLocale: 'pt-br',
+      tcgdexLocale: 'pt',
     });
     const deck = criarDeckDaCartaTcgDex(card);
 
@@ -263,7 +309,7 @@ describe('integração com a TCGdex', () => {
     await buscarCartas('lucario');
 
     expect(storedValues.has('pokemon-night:tcgdex-retry-after')).toBe(true);
-    expect(String(fetchMock.mock.calls[0][0])).toContain('/v2/pt-br/cards?');
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/v2/pt/cards?');
     expect(String(fetchMock.mock.calls[1][0])).toContain('/v2/en/cards?');
     expect(String(fetchMock.mock.calls[2][0])).toContain('/api/v2/pokemon?');
     expect(String(fetchMock.mock.calls[3][0])).toContain('/api/v2/pokemon?');

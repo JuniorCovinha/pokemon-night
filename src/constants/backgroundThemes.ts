@@ -18,6 +18,7 @@ const CHAMPION_CARD_BACKGROUND_VIDEOS: Partial<Record<string, string>> = {
   Metálico: '/backgrounds/metalico-campeao-loop.mp4',
   Dragão: '/backgrounds/dragao-campeao-loop.mp4',
   Fada: '/backgrounds/fada-campeao-loop.mp4',
+  Incolor: '/backgrounds/incolor-campeao-loop.mp4',
 };
 
 export function getChampionCardBackgroundVideo(

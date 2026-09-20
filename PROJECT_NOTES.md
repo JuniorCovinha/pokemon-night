@@ -20,18 +20,18 @@ src/
                  Tournament, Champion) — nenhuma lógica, só shape de dados
   utils/       → funções genéricas, sem conhecimento do domínio
                  (shuffle, generateId, isPowerOfTwo)
-  services/    → toda a regra de negócio, funções puras e testadas
-                 (deckAssignmentService, bracketService, tournamentService)
+  services/    → regras de negócio puras e testadas e integrações externas
+                 (sorteio, bracket, rodadas, resultados, classificação, catálogo)
   contexts/    → ponte entre services e React (TournamentContext,
                  tournamentReducer) — NUNCA contém lógica de sorteio,
                  só traduz ações em chamadas de service
   hooks/       → useTournament() para consumir o contexto
   data/        → mocks iniciais (players.ts, decks.ts)
   constants/   → valores nomeados (nomes de rodada, tamanhos suportados)
-  pages/       → só a HomePage provisória por enquanto
-  components/  → VAZIO — próxima etapa
-  layouts/     → VAZIO — ainda não usado
-  styles/      → VAZIO — ainda não usado
+  pages/       → seleção de modo, Sorteio e Campeonato
+  components/  → inscrições, decks, rodadas, classificação e campeão
+  layouts/     → estruturas compartilhadas das páginas (ex: menu/guia responsivo)
+  styles/      → estilos globais e de componentes estruturais não cobertos só por Tailwind
 ```
 
 ## Decisões importantes já tomadas (não reabrir sem motivo forte)
@@ -90,10 +90,12 @@ src/
     `public/backgrounds/lutador-campeao-loop.mp4`,
     `public/backgrounds/sombrio-campeao-loop.mp4`,
     `public/backgrounds/metalico-campeao-loop.mp4`,
-    `public/backgrounds/dragao-campeao-loop.mp4` e
-    `public/backgrounds/fada-campeao-loop.mp4`, usados respectivamente por campeões
-    dos tipos Fogo, Água, Elétrico, Grama, Psíquico, Lutador, Sombrio, Metálico, Dragão e
-    Fada; outros tipos mantêm o fundo claro até receberem seus próprios vídeos.
+    `public/backgrounds/dragao-campeao-loop.mp4`,
+    `public/backgrounds/fada-campeao-loop.mp4` e
+    `public/backgrounds/incolor-campeao-loop.mp4`, usados respectivamente por campeões
+    dos tipos Fogo, Água, Elétrico, Grama, Psíquico, Lutador, Sombrio, Metálico, Dragão,
+    Fada e Incolor. As 11 tipagens TCG planejadas têm vídeo; tipos sem mapeamento ou
+    ausentes mantêm o fundo claro.
 
 11. **Efeitos inspirados no React Bits:** cinco efeitos locais em
     `src/components/effects` preservam a identidade pixel art sem novas dependências.
@@ -109,6 +111,42 @@ src/
     usam o componente `BrandTitle`, com amarelo claro e contorno pixelado escuro. No
     modo Sorteio, a criação da chave move foco e rolagem para a seção do bracket apenas
     na transição sem chave → com chave; a revelação do campeão continua levando ao topo.
+
+13. **Busca de cartas:** TCGdex `/pt` primeiro, `/en` como alternativa quando a busca
+    falhar ou vier vazia, depois PokéAPI e catálogo local. O filtro de categoria é
+    `Pokémon` em `/pt` e `Pokemon` em `/en`; o idioma da busca acompanha os detalhes.
+    Em 06/09/2026, a consulta real de Xerneas com `/pt` e categoria localizada retornou
+    16 cartas na primeira página. Apenas mudar a rota mantendo `Pokemon` retornava vazio.
+
+14. **Classificação Suíça local v1:** `standingsService` calcula uma projeção dos
+    resultados confirmados/corrigidos de rodadas iniciadas, sem duplicá-la no reducer.
+    Mostra campanha V–D–E, byes, pontos (3/1/0), Op. % e Op. Op. %. Bye dá vitória e
+    pontos, mas não participa dos percentuais. O percentual individual exclui byes e
+    usa vitórias/confrontos, com piso de 25% e teto de 75% para inscrições desistentes
+    ou desclassificadas. Sem adversário real, o percentual aparece como `—`.
+    Empates após os dois percentuais compartilham colocação; a ordem da inscrição é
+    apenas visual e não define seed nem vaga no Top Cut. A tabela é parcial durante
+    a rodada e recalculada após cada confirmação ou correção.
+
+    O snapshot `config.standingsRules` identifica `local-standings-2026-09-v1`;
+    configurações antigas sem snapshot usam esse padrão local. A referência histórica
+    é o [Play! Pokémon Handbook de 06/10/2023, seções 4.4.2–4.4.3.2](https://www.pokemon.com/static-assets/content-assets/cms2/pdf/play-pokemon/rules/play-pokemon-tournament-rules-handbook-10062023-en.pdf).
+    A [página oficial atual de documentos](https://play.pokemon.com/en-us/resources/documents/)
+    foi consultada em 06/09/2026, mas os PDFs atuais de regras gerais e TCG bloquearam
+    o acesso. A validação contra o regulamento vigente continua pendente; esta versão
+    é uma política local, não uma implementação certificada do regulamento atual.
+
+15. **Navegação da busca no Campeonato:** escolher/alterar deck rola até o painel e
+    foca o campo de busca. Selecionar ou fechar devolve foco e rolagem ao card do
+    jogador correspondente, depois da atualização visual. A preferência por movimento
+    reduzido é respeitada. Trocar de jogador reinicia a busca; fechar ou trocar cancela
+    a consulta de detalhes pendente para impedir seleções tardias no painel anterior.
+
+16. **Tipografia:** `Press Start 2P` permanece na marca, nos títulos e badges, enquanto
+    `Pixelify Sans` é usada nos textos comuns. A tabela de classificação usa
+    `Silkscreen` somente nas células numéricas — posição, pontos, campanha, byes e
+    percentuais — para tornar especialmente o algarismo 5 mais legível sem perder a
+    estética pixelada.
 
 ## Estado atual do gerenciador Suíço
 
@@ -129,25 +167,88 @@ Em 31/08/2026 foi concluída a primeira fatia do novo modo Campeonato:
 - transição automática para revisão quando todas as mesas forem confirmadas;
 - encerramento bloqueado até a confirmação completa dos resultados.
 
-Próxima etapa: calcular e exibir a classificação por pontos a partir dos resultados
-confirmados, incluindo o bye e os primeiros critérios de desempate.
+Em 06/09/2026 foi adicionada a classificação por pontos, bye e os dois primeiros
+percentuais de desempate, com tabela responsiva e sprites dos decks. Naquela etapa,
+o fluxo ainda impedia correções após encerrar a rodada.
 
-Depois de concluir todo o fluxo das rodadas Suíças — resultados, classificação,
-rodadas seguintes e correções — implementar um menu lateral responsivo. A primeira
-versão será informativa, explicando os modos Campeonato e Sorteio de decks, o sistema
-Suíço e todas as opções configuráveis. No desktop será uma barra recolhível; no celular,
-um painel deslizante. O conteúdo deverá vir de uma fonte central para não duplicar
-explicações entre telas.
+Em 07/09/2026 foram adicionados os pareamentos das rodadas seguintes. O serviço usa
+busca completa com memoização (até 16 jogadores), proíbe revanche e repetição de bye,
+prioriza o bye na menor pontuação elegível que permita uma combinação completa e
+minimiza a soma das diferenças de pontos entre adversários. Empates entre soluções
+usam uma ordem sorteada, registrada em `SwissRound.pairingOrder` com a versão
+`local-pairing-2026-09-v1`. Esta é uma política de pareamento local, não uma reprodução
+certificada do algoritmo do TOM.
+
+A próxima rodada exige que todas as anteriores estejam encerradas e confirmadas.
+Partidas antigas são preservadas; IDs repetidos e históricos incompletos são rejeitados.
+Se não existir combinação válida, o serviço mantém o evento intacto e mostra um erro;
+não há revanche automática. Configurações longas (por exemplo, 4 rodadas com 4 jogadores)
+podem esgotar os adversários disponíveis.
+
+A interface mostra progresso, botão para gerar a próxima rodada e histórico somente
+para consulta. A geração move foco e rolagem aos novos confrontos; a classificação da
+rodada anterior continua visível até o início da nova. Ao terminar a última rodada,
+o estado passa para `suico-concluido`, sem gerar rodada extra, campeão ou Top Cut
+automaticamente.
+
+Também em 07/09/2026 foi adicionada a reabertura da última rodada encerrada, inclusive
+após a conclusão do Suíço, mediante justificativa obrigatória (até 500 caracteres).
+Reabrir preserva partidas, resultados e bye, incrementa a revisão da rodada, remove
+o encerramento atual e retorna para revisão. É necessário encerrar novamente antes
+de gerar a próxima rodada. Uma rodada com pareamentos posteriores permanece protegida;
+esta versão não descarta nem refaz rodadas posteriores automaticamente. A existência
+de bracket ou campeão também bloqueia a reabertura.
+
+O `auditLog` do evento registra confirmações e correções de resultados, encerramentos
+e reaberturas, com sequência, horário e snapshots independentes de antes/depois.
+Reaberturas incluem justificativa; correções identificam a revisão da rodada. Confirmar
+novamente um resultado idêntico não gera revisão extra. O operador é identificado como
+organizador local, sem login. Eventos antigos sem log são aceitos; iniciar outro evento
+limpa o histórico. A interface permite consultar a linha do tempo de alterações.
+O histórico ainda existe apenas no estado do evento aberto: persistência e exportação
+continuam pendentes e são necessárias antes de uso real.
+
+Em 09/09/2026 foi concluído o menu lateral informativo responsivo. No desktop, ele é
+recolhível; no celular, abre como painel modal deslizante, com foco contido e fechamento
+por Escape. O conteúdo vem de `constants/appGuide.ts`, que também fornece as mesmas
+descrições usadas na tela inicial. O guia explica os dois modos, configuração, rodadas
+Suíças, classificação, correções e limitações atuais. Os atalhos são contextuais e levam
+somente a seções existentes na etapa atual, sem trocar de rota nem descartar o evento.
+Movimento reduzido é respeitado. A interface informa explicitamente que o Top Cut ainda
+não é gerado e que recarregar ou sair da tela ainda perde o evento.
+
+Em 20/09/2026, o menu desktop passou a sobrepor a página, mantendo a posição e a
+largura do conteúdo principal ao abrir ou recolher. Fechado, deixa apenas um botão
+flutuante para reabertura. As áreas roláveis do guia têm barra própria em amarelo e
+fundo escuro, isolada da rolagem da página e compatível com Firefox e navegadores
+WebKit. A explicação da pesquisa foi simplificada para o usuário: busca cartas e, se
+esse serviço estiver indisponível, busca o Pokémon, sem expor APIs ou idiomas internos.
+
+Após os testes de uso, o guia desktop passou a iniciar sempre recolhido e só abre por
+ação do usuário. No Campeonato, a lista separada de inscritos permanece disponível para
+conferência até o início da primeira rodada; depois disso, é removida junto com seu
+atalho contextual, pois a classificação passa a concentrar jogadores e decks.
+
+Próxima etapa: persistência/recuperação e exportação/importação do evento. Em seguida,
+completar os critérios de desempate antes do Top Cut: confronto direto quando aplicável,
+sorteio final reproduzível e auditável, indicação visual do critério usado e confirmação
+da classificação final e das seeds. A ordem de inscrição não será usada silenciosamente
+como desempate. Só depois dessa etapa será gerado o Top Cut.
 
 ## Testes
 
-103 testes com Vitest, cobrindo:
+179 testes com Vitest, cobrindo:
 
 - `services/deckAssignmentService.test.ts` — sorteio de decks
 - `services/bracketService.test.ts` — geração de chave e propagação de
   vencedor (inclusive imutabilidade)
-- `services/swissPairingService.test.ts` — primeira rodada e bye
+- `services/swissPairingService.test.ts` — primeira rodada, pontos, busca de combinação
+  completa, ausência de revanche, bye elegível e casos sem solução
+- `services/swissProgression.test.ts` — torneios completos de 4 a 16 jogadores,
+  preservação de histórico, correções, inscrições ativas, bloqueios e conclusão do Suíço
 - `services/roundService.test.ts` — criação e transição da rodada Suíça
+- `services/roundAudit.test.ts` — reabertura, justificativa, snapshots, correção com
+  bye, rodada final, proteção de rodadas anteriores e confirmações sem mudança
 - `services/matchResultService.test.ts` — resultados por jogo, empates, correções e
   validações dos formatos melhor de 1 e melhor de 3
 - `contexts/tournamentReducer.test.ts` — fluxo completo do reducer
@@ -159,6 +260,19 @@ explicações entre telas.
   borda do campeão
 - `components/BrandTitle.test.tsx` — marca visual centralizada e semântica configurável
 - `hooks/bracketScroll.test.ts` — transição, foco e rolagem até a chave
+- `hooks/deckSearchNavigation.test.ts` — foco do campo de busca, retorno ao card e
+  movimento reduzido
+- `services/tcgdexService.test.ts` — rota `/pt`, categoria localizada, detalhes no
+  mesmo idioma e alternativas de catálogo
+- `services/standingsService.test.ts` — pontos, byes, dois desempates, correções,
+  transições, resultados administrativos e snapshot de regras locais
+- `components/SwissStandingsPanel.test.tsx` — tabela parcial/encerrada, percentuais,
+  empates e uso de sprites
+- `pages/ChampionshipPage.test.tsx` — acesso à próxima rodada, classificação anterior,
+  histórico e conclusão sem rodada extra
+- `layouts/AppGuideLayout.test.tsx` — conteúdo central, atalhos contextuais válidos nas
+  etapas dos dois modos, limitações atuais, texto não técnico da busca, sobreposição no
+  desktop e estrutura acessível do painel móvel
 
 Rodar com `npm run test`.
 
@@ -174,15 +288,19 @@ Rodar com `npm run test`.
 
 ## O que falta (roadmap combinado com o usuário)
 
-**Próxima etapa (em andamento):** componentes de UI reais —
-`Header`, `PlayerCard`, `DeckCard`, `DeckGrid`, `TournamentBracket`,
-`MatchCard`, `ChampionCard`, `Button`, `Modal`, `Input`, `EmptyState`,
-`Loading`. Design minimalista: muito espaço em branco, cards
-arredondados, sombras suaves, animações discretas, tipografia moderna,
-excelente responsividade. Fluxo de tela: Header → Jogadores → Decks
-Sorteados → Chave → Campeão. Interações-chave: revelar deck sorteado com
-animação, destacar jogador, animar entrada dos confrontos, avançar
-vencedor automaticamente na chave, comemoração ao surgir o campeão.
+**Próxima etapa do Campeonato:** persistência local com recuperação segura do evento e
+exportação/importação, conforme a sequência em
+`.agents/skills/pokemon-night/references/local-tournament-roadmap.md`. O menu lateral
+informativo responsivo já está implementado. A interface do Sorteio e seus efeitos já
+estão implementados. Os vídeos de fundo do campeão estão completos para as 11 tipagens
+TCG planejadas, incluindo Incolor.
+
+**Etapa seguinte:** completar o desempate da classificação Suíça. Pontos,
+`opponentWinRate` e `opponentsOpponentWinRate` já estão implementados; ainda faltam o
+confronto direto para exatamente dois jogadores que já tenham se enfrentado, o sorteio
+final com valor persistido para reprodução e auditoria, a apresentação do critério que
+desempatou cada posição e a confirmação das seeds antes de declarar campeão ou montar o
+Top Cut.
 
 **Depois (v2 em diante, conforme roadmap original do usuário):**
 

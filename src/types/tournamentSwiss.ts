@@ -7,6 +7,9 @@ export type SwissRound = {
   revision: number;
   startedAt?: string;
   completedAt?: string;
+  /** Ordem sorteada usada para decidir entre pareamentos equivalentes. */
+  pairingOrder?: string[];
+  pairingRulesVersion?: string;
 };
 
 export type TournamentMatchStatus =

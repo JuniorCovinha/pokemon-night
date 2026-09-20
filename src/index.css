@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap');
 @import 'tailwindcss';
 @import './styles/reactBitsEffects.css';
 
@@ -9,11 +9,12 @@
 
 @theme {
   /* ---------- Tipografia ----------
-     Press Start 2P: só títulos/marca/badges curtos (texto longo fica
-     ilegível nessa fonte — uso deliberadamente restrito).
-     Pixelify Sans: tudo que precisa ser lido de verdade. */
+     Press Start 2P: títulos, marca e badges curtos.
+     Pixelify Sans: tudo que precisa ser lido de verdade.
+     Silkscreen: dados numéricos densos, com algarismos pixelados mais claros. */
   --font-display: 'Press Start 2P', 'Courier New', monospace;
   --font-sans: 'Pixelify Sans', system-ui, sans-serif;
+  --font-numeric: 'Silkscreen', 'Courier New', monospace;
 
   /* ---------- Cores ---------- */
   --color-canvas: #f4f2ea; /* fundo — bege claro tipo tela LCD, não branco puro */

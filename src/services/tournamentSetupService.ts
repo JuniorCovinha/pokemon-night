@@ -6,6 +6,7 @@ import {
 } from '@/constants/tournament';
 import type { Tournament, TournamentConfig } from '@/types';
 import type { PlayerDeckRegistration } from './tournamentService';
+import { LOCAL_STANDINGS_RULES } from '@/constants/standings';
 
 export type SwissTournamentSetup = {
   config: TournamentConfig;
@@ -33,6 +34,7 @@ export function criarConfiguracaoSuicaPadrao(playerCount: number): TournamentCon
     roundDurationMinutes: DEFAULT_ROUND_DURATION_MINUTES,
     swissRoundCount: recomendarRodadasSuicas(playerCount),
     rulesVersion: LOCAL_TOURNAMENT_RULES_VERSION,
+    standingsRules: { ...LOCAL_STANDINGS_RULES },
   };
 }
 
@@ -65,6 +67,7 @@ function validarConfigSuica(config: TournamentConfig): TournamentConfig {
     ...config,
     name,
     topCutSize: config.structure === 'swiss-top-cut' ? 4 : undefined,
+    standingsRules: { ...LOCAL_STANDINGS_RULES },
   };
 }
 

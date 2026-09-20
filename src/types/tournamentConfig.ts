@@ -1,3 +1,5 @@
+import type { StandingsRules } from './standing';
+
 export type TournamentStructure = 'single-elimination' | 'swiss' | 'swiss-top-cut';
 
 export type TcgFormat = 'standard' | 'expanded' | 'casual';
@@ -16,6 +18,8 @@ export type TournamentConfig = {
   topCutSize?: 4;
   /** Identifica o conjunto de padrões locais usado para criar o evento. */
   rulesVersion: string;
+  /** Opcional para configurações criadas antes da classificação local v1. */
+  standingsRules?: StandingsRules;
 };
 
 export type TournamentEntryStatus = 'checked-in' | 'dropped' | 'disqualified';

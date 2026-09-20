@@ -9,9 +9,11 @@ import {
   iniciarCampeonatoComDecksDefinidos,
   configurarCampeonatoSuico,
   gerarPrimeiraRodadaSuica,
+  gerarProximaRodadaSuica,
   iniciarRodadaSuica,
   registrarResultadoPartidaSuica,
   finalizarRodadaSuica,
+  reabrirRodadaSuica,
 } from '@/services';
 import type {
   PlayerDeckRegistration,
@@ -36,12 +38,14 @@ export type TournamentAction =
     }
   | { type: 'CONFIGURAR_CAMPEONATO_SUICO'; payload: SwissTournamentSetup }
   | { type: 'GERAR_PRIMEIRA_RODADA_SUICA' }
+  | { type: 'GERAR_PROXIMA_RODADA_SUICA' }
   | { type: 'INICIAR_RODADA_SUICA' }
   | {
       type: 'REGISTRAR_RESULTADO_SUICO';
       payload: { matchId: string; result: SwissMatchResultInput };
     }
   | { type: 'FINALIZAR_RODADA_SUICA' }
+  | { type: 'REABRIR_RODADA_SUICA'; payload: { roundNumber: number; reason: string } }
   | { type: 'REGISTRAR_VENCEDOR'; payload: { matchId: string; winnerId: string } }
   | { type: 'DESFAZER_VENCEDOR'; payload: { matchId: string } }
   | { type: 'RENOMEAR_JOGADOR'; payload: { playerId: string; novoNome: string } }
@@ -100,6 +104,9 @@ export function tournamentReducer(
       case 'INICIAR_RODADA_SUICA':
         return { tournament: iniciarRodadaSuica(state.tournament), error: null };
 
+      case 'GERAR_PROXIMA_RODADA_SUICA':
+        return { tournament: gerarProximaRodadaSuica(state.tournament), error: null };
+
       case 'REGISTRAR_RESULTADO_SUICO':
         return {
           tournament: registrarResultadoPartidaSuica(
@@ -112,6 +119,16 @@ export function tournamentReducer(
 
       case 'FINALIZAR_RODADA_SUICA':
         return { tournament: finalizarRodadaSuica(state.tournament), error: null };
+
+      case 'REABRIR_RODADA_SUICA':
+        return {
+          tournament: reabrirRodadaSuica(
+            state.tournament,
+            action.payload.roundNumber,
+            action.payload.reason,
+          ),
+          error: null,
+        };
 
       case 'REGISTRAR_VENCEDOR':
         return {

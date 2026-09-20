@@ -1,3 +1,4 @@
+import { acrescentarAuditoria } from './tournamentAuditService';
 import type {
   MatchFormat,
   Tournament,
@@ -92,6 +93,7 @@ export function registrarResultadoPartidaSuica(
   tournament: Tournament,
   matchId: string,
   input: SwissMatchResultInput,
+  clock: () => string = () => new Date().toISOString(),
 ): Tournament {
   if (
     tournament.status !== 'rodada-suica-ativa' &&
@@ -109,12 +111,32 @@ export function registrarResultadoPartidaSuica(
     throw new Error('A partida não pertence à rodada Suíça atual.');
   }
 
+  if (
+    (currentRound.status !== 'active' && currentRound.status !== 'awaiting-results') ||
+    match.roundNumber !== currentRound.number
+  ) {
+    throw new Error(
+      'A rodada precisa estar aberta para registrar ou corrigir resultados.',
+    );
+  }
+
   if (!match.player2Id || match.result?.kind === 'bye') {
     throw new Error('O resultado de um bye é confirmado automaticamente.');
   }
 
   const result = criarResultado(tournament, match.player1Id, match.player2Id, input);
   const isCorrection = Boolean(match.result);
+  if (
+    match.result &&
+    match.result.kind === result.kind &&
+    match.result.winnerId === result.winnerId &&
+    match.result.gameOutcomes.length === result.gameOutcomes.length &&
+    match.result.gameOutcomes.every(
+      (outcome, index) => outcome === result.gameOutcomes[index],
+    )
+  ) {
+    return tournament;
+  }
   const matches = tournament.tournamentMatches.map((item) =>
     item.id === matchId
       ? {
@@ -134,6 +156,17 @@ export function registrarResultadoPartidaSuica(
     ...tournament,
     status: allConfirmed ? 'rodada-suica-revisao' : 'rodada-suica-ativa',
     tournamentMatches: matches,
+    auditLog: acrescentarAuditoria(
+      tournament,
+      currentRound.number,
+      {
+        kind: isCorrection ? 'match-corrected' : 'match-confirmed',
+        roundRevision: currentRound.revision,
+        before: match,
+        after: matches.find((item) => item.id === matchId)!,
+      },
+      clock(),
+    ),
     swissRounds: tournament.swissRounds.map((round) =>
       round.number === currentRound.number
         ? { ...round, status: allConfirmed ? 'awaiting-results' : 'active' }

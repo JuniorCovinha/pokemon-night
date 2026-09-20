@@ -37,7 +37,7 @@ export type TcgDexCard = TcgDexCardSummary & {
 };
 
 export type CardCatalogSource = 'tcgdex' | 'pokeapi' | 'local';
-export type TcgDexLocale = 'pt-br' | 'en';
+export type TcgDexLocale = 'pt' | 'en';
 
 export type CardCatalogItem =
   | (TcgDexCardSummary & {
@@ -156,14 +156,14 @@ async function getPokeApiJson(url: URL, signal?: AbortSignal): Promise<unknown> 
 export async function buscarCartasTcgDex(
   termo: string,
   signal?: AbortSignal,
-  locale: TcgDexLocale = 'pt-br',
+  locale: TcgDexLocale = 'pt',
 ): Promise<TcgDexCardSummary[]> {
   const termoTratado = termo.trim();
   if (termoTratado.length < 2) return [];
 
   const url = new URL(`${TCGDEX_API_URL}/${locale}/cards`);
   url.searchParams.set('name', termoTratado);
-  url.searchParams.set('category', 'Pokemon');
+  url.searchParams.set('category', locale === 'pt' ? 'Pokémon' : 'Pokemon');
   url.searchParams.set('pagination:page', '1');
   url.searchParams.set('pagination:itemsPerPage', String(SEARCH_PAGE_SIZE));
 
@@ -408,7 +408,7 @@ export async function buscarCartas(
   if (!tcgDexTemporarilyUnavailable()) {
     let receivedTcgDexResponse = false;
 
-    for (const locale of ['pt-br', 'en'] satisfies TcgDexLocale[]) {
+    for (const locale of ['pt', 'en'] satisfies TcgDexLocale[]) {
       try {
         const cards = await buscarCartasTcgDex(termo, signal, locale);
         receivedTcgDexResponse = true;
@@ -461,7 +461,7 @@ export async function buscarCartas(
 export async function obterCartaTcgDex(
   cardId: string,
   signal?: AbortSignal,
-  locale: TcgDexLocale = 'pt-br',
+  locale: TcgDexLocale = 'pt',
 ): Promise<TcgDexCard> {
   const url = new URL(`${TCGDEX_API_URL}/${locale}/cards/${encodeURIComponent(cardId)}`);
   const data = await getJson(url, signal);

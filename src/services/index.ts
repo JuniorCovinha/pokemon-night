@@ -6,3 +6,4 @@ export * from './swissPairingService';
 export * from './roundService';
 export * from './matchResultService';
 export * from './tcgdexService';
+export * from './standingsService';

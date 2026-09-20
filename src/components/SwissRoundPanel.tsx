@@ -191,7 +191,7 @@ function MatchResultControls({
       {match.result && (
         <p className="flex items-center gap-1.5 text-xs text-ink-soft">
           <RotateCcw size={13} />
-          Resultado registrado. Confirmar novamente será tratado como correção.
+          Resultado registrado. Alterações confirmadas ficam no histórico de correções.
         </p>
       )}
 
@@ -395,13 +395,15 @@ export function SwissRoundPanel({
 
       {round.status === 'awaiting-results' && (
         <div className="rounded-xl border border-warning/40 bg-warning-soft px-4 py-3 text-sm text-warning">
-          Revise os resultados. Você ainda pode corrigir qualquer mesa antes de encerrar.
+          {round.revision > 1
+            ? 'Rodada reaberta para correção. Revise os resultados e encerre novamente antes de continuar.'
+            : 'Revise os resultados. Você ainda pode corrigir qualquer mesa antes de encerrar.'}
         </div>
       )}
 
       {round.status === 'completed' && (
         <div className="rounded-xl border border-success/30 bg-success-soft px-4 py-3 text-sm text-success">
-          Rodada encerrada. A próxima etapa será calcular e exibir a classificação.
+          Rodada encerrada. Os resultados estão incluídos na classificação.
         </div>
       )}
     </section>

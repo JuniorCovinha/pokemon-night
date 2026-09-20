@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Check, ImageOff, LoaderCircle, Plus, Search, WifiOff } from 'lucide-react';
 import {
   buscarCartas,
@@ -32,6 +32,9 @@ export function PokemonDeckSearch({
   const [isSearching, setIsSearching] = useState(false);
   const [addingCardId, setAddingCardId] = useState<string>();
   const [error, setError] = useState<string | null>(null);
+  const selectionController = useRef<AbortController | null>(null);
+
+  useEffect(() => () => selectionController.current?.abort(), []);
 
   useEffect(() => {
     const term = query.trim();
@@ -83,18 +86,24 @@ export function PokemonDeckSearch({
     );
     if (alreadySelected || selectionDisabled) return;
 
+    selectionController.current?.abort();
+    const controller = new AbortController();
+    selectionController.current = controller;
+
     setAddingCardId(card.id);
     setError(null);
 
     try {
-      const cardDetail = await obterCartaDoCatalogo(card);
+      const cardDetail = await obterCartaDoCatalogo(card, controller.signal);
+      if (controller.signal.aborted) return;
       onSelect(criarDeckDaCartaTcgDex(cardDetail));
     } catch (err) {
+      if (controller.signal.aborted) return;
       setError(
         err instanceof Error ? err.message : 'Não foi possível adicionar este Pokémon.',
       );
     } finally {
-      setAddingCardId(undefined);
+      if (!controller.signal.aborted) setAddingCardId(undefined);
     }
   }
 

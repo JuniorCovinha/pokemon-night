@@ -7,3 +7,5 @@ export * from './champion';
 export * from './tournament';
 export * from './tournamentConfig';
 export * from './tournamentSwiss';
+export * from './standing';
+export * from './tournamentAudit';

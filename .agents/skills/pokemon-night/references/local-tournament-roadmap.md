@@ -54,6 +54,9 @@ data do conjunto de regras usado pelo evento quando isso afetar cálculos.
   eles já se enfrentaram.
 - Um critério aleatório final deve ser reproduzível e auditável; armazene a semente ou
   o valor utilizado.
+- Antes de declarar o campeão ou gerar um Top Cut, o sistema deve materializar uma
+  ordem final única, exibir quais critérios resolveram cada empate e pedir a confirmação
+  das seeds. A ordem de inscrição nunca deve funcionar como desempate oculto.
 
 ### Bye
 
@@ -303,8 +306,11 @@ domínio independente da tecnologia para permitir um banco remoto no futuro.
 7. Bloqueio, revisão e correção de rodadas com histórico.
 8. Menu lateral responsivo com explicações dos modos, regras e opções disponíveis.
 9. Persistência, recuperação e exportação/importação.
-10. Top 4 por seed usando o bracket existente.
-11. Tela pública de pareamentos, classificação e cronômetro.
+10. Completar os critérios de desempate: confronto direto quando aplicável, sorteio
+    final reproduzível e auditável, explicação do critério usado e confirmação da
+    classificação final.
+11. Top 4 por seed usando o bracket existente.
+12. Tela pública de pareamentos, classificação e cronômetro.
 
 Relatórios impressos, match slips, QR code, divisões etárias completas e listas de 60
 cartas ficam para iterações posteriores.
@@ -317,6 +323,10 @@ cartas ficam para iterações posteriores.
 - Registrar vitórias, derrotas e empates a partir dos resultados individuais dos jogos.
 - Impedir o fechamento de uma rodada com resultados pendentes.
 - Recalcular classificação e desempates após uma correção.
+- Resolver qualquer empate restante de forma reproduzível, sem usar silenciosamente a
+  ordem de inscrição.
+- Confirmar a classificação final e as seeds antes de declarar o campeão ou iniciar o
+  Top Cut.
 - Restaurar todo o evento depois de recarregar a página.
 - Gerar Top 4 opcional a partir das seeds corretas.
 - Preservar o modo Sorteio sem regressões.

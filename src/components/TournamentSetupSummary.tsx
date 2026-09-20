@@ -27,7 +27,12 @@ export function TournamentSetupSummary({
   const hasTopCut = config.structure === 'swiss-top-cut';
 
   return (
-    <section className="flex flex-col gap-5">
+    <section
+      id="championship-setup"
+      tabIndex={-1}
+      data-guide-section
+      className="flex flex-col gap-5"
+    >
       <Card className="light-card !p-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div>

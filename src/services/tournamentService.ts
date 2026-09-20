@@ -33,6 +33,7 @@ export function criarTorneio(
     deckRegistrations: [],
     swissRounds: [],
     tournamentMatches: [],
+    auditLog: [],
     createdAt: new Date().toISOString(),
   };
 }
